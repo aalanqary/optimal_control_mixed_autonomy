@@ -115,16 +115,15 @@ vf = @(t) interp1(t3, y(:,2), t);
 
 V_prime = @(x) (v_max * (sech(x - safe_des)).^2) / (1+tanh(l+safe_des));
 
-f_a = @(t,p) [-1*(alpha*V_prime(xl(t)-xf(t) - l) - beta*(2*(vl(t) - vf(t))/(xl(t)-xf(t) - l).^3))*p(4);
-    -p(1) - (beta / (xl(t)-xf(t) - l).^2)*p(4); 
-    (alpha*V_prime(xl(t)-xf(t) - l) - beta*(2*(vl(t) - vf(t))/(xl(t)-xf(t) - l).^3))*p(4);
-     2*(vf(t) - des_vel) - p(3) + (alpha + beta/(xl(t)- xf(t) - l).^2)*p(4)];
+f_a = @(t,p) [-1*(alpha*V_prime(xl(t)-xf(t) - l) - beta*(2*(vl(t) - vf(t))/(xl(t)-xf(t) - l).^3))*p(3);
+    (alpha*V_prime(xl(t)-xf(t) - l) - beta*(2*(vl(t) - vf(t))/(xl(t)-xf(t) - l).^3))*p(3);
+     2*(vf(t) - des_vel) - p(2) + (alpha + beta/(xl(t)- xf(t) - l).^2)*p(3)];
 
-p0 = [0; 0; 0; 0];
+p0 = [0; 0; 0];
 
 [t4,p] = ode45(f_a, t2, p0);
 
-dz = p(:, 2);
+dz =  p(:, 1) + ((beta ./ (xl(t4) - xf(t4) - l).^2) .* p(:, 3));
 
 end
 
