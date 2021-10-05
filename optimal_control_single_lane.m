@@ -9,7 +9,7 @@ t_int = linspace(t0, t1, nt);
 options = optimoptions('fmincon','Display','iter-detailed', ...
                         'SpecifyObjectiveGradient',useGradient,...
                         'FunValCheck','on', 'DerivativeCheck', 'off',...
-                        'maxfunevals',1e5,'StepTolerance',1e-16,'algorithm', 'interior-point');
+                        'maxfunevals',10e5,'StepTolerance',1e-10,'algorithm', 'interior-point');
 if useGradient
     fun = @(v) objective_gradient(v, t_int, t1);
 else
@@ -49,9 +49,11 @@ ACC=@(c,d,t) alpha*(V(xl(t)-c-l)-d)+beta*(vl(t)-d)./((xl(t)-c-l).^2);
 figure(1)
 plot(t,xl(t),t,y(:,1))
 title("Position")
-figure(2)
-plot(t,vl(t),t,y(:,2))
-title("Velocity")
+figure(5)
+plot(t(5:end),vl(t(5:end)), "red")
+xlabel("time")
+ylabel("velocity")
+
 
 %% Define functions 
 function z = objective(v,t_int,t1)
@@ -106,7 +108,7 @@ ACC = @(c,d,t) alpha*(V(xl(t)-c-l)-d)+beta*(vl(t)-d)./((xl(t)-c-l).^2);
 
 [t3,y] = ode45(@(t,y)[y(2);ACC(y(1),y(2),t)],t2,[x0(2);v0(1)]);
 
-des_vel = 3;
+
 z = t1*diff(t3)'*(y(1:end-1,2)-des_vel).^2;
 %+ %0.005*t1*sum(diff(t).*(ACC(y(1:end-1,1),y(1:end-1,2),t(1:end-1))).^2)
 
