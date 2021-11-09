@@ -1,4 +1,4 @@
-function [fc,P,flag] = simplified_fuel_model(v,a,vehicle)
+function fc = simplified_fuel_model(v,a,vehicle)
 
 % This function implements the formulae for the simplified
 % fuel consumption models of various vehicles.
@@ -44,18 +44,13 @@ v_max_fit = 40;                     % maximum speed considered in fitting
 ma = b1 * (v/v_max_fit).^b2 .* ...  % calculate max feasible
     (1-v/v_max_fit).^b3 +b4*v + b5; % a for each input v
 
-flag = zeros(size(v));              % initialize flag with zeros
-flag = flag + 2*(v<0);              % add 2 when v is neg
-flag = flag + (v>=0).*(a>ma);       % add 1 when a is infeasible (and v is pos)
-
 v = max(v,0);                       % treat negative velocities as zero
 fc = C0 + C1*v + C2*v.^2 + ...      %
     C3*v.^3 + p0*a + ...            % 
-    p1*a.*v + p2*a.*v.^2 + ...      % polynomial fuel consumption formula 
-    q0*max(a,0).^2 + ...            %
-    q1*max(a,0).^2.*v;              %
+    p1*a.*v + p2*a.*v.^2;% + ...      % polynomial fuel consumption formula 
+%     q0*max(a,0).^2 + ...            %
+%     q1*max(a,0).^2.*v;              %
 fc = max(fc, beta0);                % assign min fc when polynomial is below the min
-P = fc * gs2KW;                     % calculate power
 
 
 

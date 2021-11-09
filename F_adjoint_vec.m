@@ -1,7 +1,5 @@
-function PQ_dot = F_adjoint(t, PQ, X, V, U, scenario, params) %X\in R(t_int X N+M), V \in R(t_int X M), U \in R(t_int X N)
+function PQ_dot = F_adjoint_vec(t, PQ, X, V, U, scenario, params) %X\in R(t_int X N+M), V \in R(t_int X M), U \in R(t_int X N)
     global fun_interp
-    global iter
-    iter = iter + 1;
     Q = PQ(end - length(scenario("I_h")) + 1: end);
     P = PQ(1:end - length(scenario("I_h")));
     

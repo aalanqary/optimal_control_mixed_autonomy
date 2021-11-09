@@ -1,6 +1,4 @@
-function j = J(X, V, U, scenario, params) % both X and U are matrices
-%     VU = [V, U];
-    load(['RAV4_coeffs.mat'])       % load vehicle coefficients
+function j = J(X, V, U, scenario, params)
     idx = scenario("I_a");
     X_diff = [];
     des_v = params("des_v");
@@ -35,9 +33,4 @@ function j = J(X, V, U, scenario, params) % both X and U are matrices
     j_penalize = sum(log(min(1, max(X_diff, eps))).^2, 2);
     j_energy = sum(simplified_fuel_model(V,A,'RAV4'), 2);
     j = params("T")/params("nt") * sum(j_velocity + j_penalize + j_energy);
-%     if min(X_diff) <= 0
-%         display(params("T")/params("nt") * sum(sum((VU-des_v(params("t_int"))).^2, 2)), 'j_velocity')
-%         display(params("T")/params("nt") * sum(sum(log(min(1, max(X_diff, eps))).^2, 2)), 'j_position')
-% %         display(j, 'j_position')
-%     end 
 end 

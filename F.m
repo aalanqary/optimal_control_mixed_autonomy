@@ -1,4 +1,6 @@
 function XV_dot = F(t, XV, U, scenario, params) %X \in R(2M+N) and U \in R(N) 
+    global iter
+    iter = iter + 1;
     V = XV(end - length(scenario("I_h")) + 1: end);
     X = XV(1:end - length(scenario("I_h")));
     
