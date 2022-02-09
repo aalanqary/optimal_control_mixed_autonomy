@@ -1,4 +1,4 @@
-function scenario = generate_scenario(config, x_0, v_0, x_leader, v_leader)
+function scenario = generate_scenario(config, x_0, v_0, v_leader, params)
     scenario = containers.Map;
     
     % cars configuration 
@@ -7,20 +7,12 @@ function scenario = generate_scenario(config, x_0, v_0, x_leader, v_leader)
     scenario("I_h") = find(scenario("config") - 1);
     
     % initial conditions 
-    if length(x_0) > 1
-        scenario("x_0") = x_0(2:end);
-    else
-        scenario("x_0") = flip(0:length(config) - 1);
-        scenario("x_0") = x_0 * scenario("x_0")';
-    end 
+    scenario("x_0") = x_0(2:end);
+    scenario("v_0") = v_0;
     
-    if length(v_0) > 1
-        scenario("v_0") = v_0;
-    else
-        scenario("v_0") = v_0*ones(length(scenario("I_h")),1);
-    end 
-
+    % leader velocity 
     scenario("v_leader") = v_leader;
-    scenario("x_leader") = x_leader;
+    [~, x_leader] = ode45(@(t, dd) v_leader(t), params("t_int"), x_0(1));
+    scenario("x_leader") = @(t) interp1(params("t_int"), x_leader, t);
 
 end 

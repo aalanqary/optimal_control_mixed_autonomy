@@ -45,11 +45,9 @@ ma = b1 * (v/v_max_fit).^b2 .* ...  % calculate max feasible
     (1-v/v_max_fit).^b3 +b4*v + b5; % a for each input v
 
 v = max(v,0);                       % treat negative velocities as zero
-fc = C0 + C1*v + C2*v.^2 + ...      %
-    C3*v.^3 + p0*a + ...            % 
-    p1*a.*v + p2*a.*v.^2;% + ...      % polynomial fuel consumption formula 
-%     q0*max(a,0).^2 + ...            %
-%     q1*max(a,0).^2.*v;              %
+fc = C0 + C1*v + C2*v.^2 + C3*v.^3+ ...
+    p0*a + p1*a.*v + p2*a.*v.^2 + ...
+    q0*max(a,0).^2 + q1*max(a,0).^2.*v;
 fc = max(fc, beta0);                % assign min fc when polynomial is below the min
 
 

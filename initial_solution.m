@@ -1,13 +1,16 @@
-function [X, V, U_0] = initial_solution(scenario, params)
-    options_ode = [];
+function [X_0, V_0, U_0] = initial_solution(scenario, params)
     original_I_a = scenario("I_a");
     scenario("config") = zeros(1, length(scenario("config")));
     scenario("I_a") = find(scenario("config"));
     scenario("I_h") = find(scenario("config") - 1);
-    scenario("v_0") = 21 * ones(length(scenario("config")), 1);
-    params("l") = params("l") + 1.1 * params("safe_dist");
-    [~, XV] = ode23s(@(t,XV) F(t, XV, 0, scenario, params), params("t_int"), [scenario("x_0"); scenario("v_0")], options_ode);
-    V = XV(:, end - length(scenario("I_h")) + 1: end);
-    X = XV(:, 1:end - length(scenario("I_h")));
-    U_0 = V(:, original_I_a);
+    params("l") = 2 * params("l");
+    [X_0, V_0] = system_solve(zeros(params("nt"), 1), params, scenario);
+    xl = scenario("x_leader");
+    xl = xl(params("t_int"));
+    vl = scenario("v_leader");
+    vl = vl(params("t_int"));
+    X_l = [xl, X_0]; 
+    V_l = [vl, V_0]; 
+    U_0 = ACC(X_l(:, original_I_a), X_0(:, original_I_a), ... 
+              V_l(:, original_I_a), V_0(:, original_I_a), params);
 end 
