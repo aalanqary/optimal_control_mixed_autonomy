@@ -20,7 +20,7 @@ params("beta") = 21;
 params("mu1") = 200;
 params("mu2") = 1;
 % optimizer params 
-params("eps") = 0;
+params("eps") = 1;
 params("use_gradient") = true; 
 params("initalize_as_IDM") = true; 
 
@@ -30,8 +30,6 @@ fun_interp = @(val, t) interp1(params("t_int"), val, t, 'nearest');%% try neares
 
 forward_sys_solve = 0;
 
-plot_final = true;
-plot_init = false;
 %% Define scenario 
 config = [1]; %1 represents AV and 0 represents HV
 vl = data.Velocity * (1000/3600); 
@@ -68,7 +66,7 @@ tic
 options = optimoptions('fmincon','Display','iter-detailed', ...
                         'SpecifyObjectiveGradient',params("use_gradient"),...
                         'FunValCheck','on', 'DerivativeCheck', 'off',...
-                        'maxfunevals',1e6, 'StepTolerance',1e-12,'algorithm', 'active-set');
+                        'maxfunevals',1e6, 'StepTolerance',1e-12,'algorithm', 'sqp');
 
 fun = @(U) objective_gradient(U, params, scenario); 
 nonlcon = [];%@(U) nlc(U, params, scenario);
@@ -86,51 +84,48 @@ toc
 %% Plotting
 
 %Plot initial solution 
-if plot_init
-    f_scenario = figure();
-    plot(params("t_int"), xl, 'LineWidth',2)
-    hold on 
-    plot(params("t_int"), X_0, 'LineWidth',2)
-    xlabel("time (s)", 'FontSize', 18)
-    ylabel("Position (m)", 'FontSize', 18)
-    saveas(f_scenario, sprintf('scenarios/%s_pos.png', scenario("number")));
+f_scenario = figure();
+plot(params("t_int"), xl, 'LineWidth',2)
+hold on 
+plot(params("t_int"), X_0, 'LineWidth',2)
+xlabel("time (s)", 'FontSize', 18)
+ylabel("Position (m)", 'FontSize', 18)
+saveas(f_scenario, sprintf('scenarios/%s_pos.png', scenario("number")));
 
-    f_scenario = figure();
-    plot(params("t_int"), vl, 'LineWidth',2)
-    hold on 
-    plot(params("t_int"), V_0, 'LineWidth',2)
-    xlabel("time (s)", 'FontSize', 18)
-    ylabel("Velocity (m/s)", 'FontSize', 18)
-    saveas(f_scenario, sprintf('scenarios/%s_vel.png', scenario("number")));
-end 
+f_scenario = figure();
+plot(params("t_int"), vl, 'LineWidth',2)
+hold on 
+plot(params("t_int"), V_0, 'LineWidth',2)
+xlabel("time (s)", 'FontSize', 18)
+ylabel("Velocity (m/s)", 'FontSize', 18)
+saveas(f_scenario, sprintf('scenarios/%s_vel.png', scenario("number")));
 
-%Plot final solution 
-if plot_final
-    f_scenario = figure();
-    plot(params("t_int"), xl, 'LineWidth',2)
-    hold on 
-    plot(params("t_int"), X_star, 'LineWidth',2)
-    xlabel("time (s)", 'FontSize', 18)
-    ylabel("Position (m)", 'FontSize', 18)
-    saveas(f_scenario, sprintf('scenarios/%s_posSTAR.png', scenario("number")));
 
-    f_scenario = figure();
-    plot(params("t_int"), vl, 'LineWidth',2)
-    hold on 
-    plot(params("t_int"), V_star, 'LineWidth',2)
-    xlabel("time (s)", 'FontSize', 18)
-    ylabel("Velocity (m/s)", 'FontSize', 18)
-    saveas(f_scenario, sprintf('scenarios/%s_velSTAR.png', scenario("number")));
-end 
+%% Plot final solution 
+f_scenario = figure();
+plot(params("t_int"), xl, 'LineWidth',2)
+hold on 
+plot(params("t_int"), X_star, 'LineWidth',2)
+xlabel("time (s)", 'FontSize', 18)
+ylabel("Position (m)", 'FontSize', 18)
+saveas(f_scenario, sprintf('scenarios/%s_posSTAR.png', scenario("number")));
+
+f_scenario = figure();
+plot(params("t_int"), vl, 'LineWidth',2)
+hold on 
+plot(params("t_int"), V_star, 'LineWidth',2)
+xlabel("time (s)", 'FontSize', 18)
+ylabel("Velocity (m/s)", 'FontSize', 18)
+saveas(f_scenario, sprintf('scenarios/%s_velSTAR.png', scenario("number")));
 
 %% Prepare results 
-% mkdir('scenarios', scenario("number"))
-% save(sprintf('scenarios/%s/results.mat', scenario("number")), "U_star", "X_star", "V_star", "params", "scenario")
-% fc_0 = params("T")/params("nt") * sum(FC(X_0, V_0, U_0, scenario, params), "all");
-% fc_star = params("T")/params("nt") * sum(FC(X_star, V_star, U_star, scenario, params), "all");
-% fig_0 = plot_x_v(X_0, V_0, params, scenario);
-% saveas(fig_0, sprintf('scenarios/%s/initial.png', scenario("number")))
-% fig_star = plot_x_v(X_star, V_star, params, scenario);
-% saveas(fig_star, sprintf('scenarios/%s/final.png', scenario("number")))
-% 
-% reduction = (fc_0 - fc_star)/fc_0;
+mkdir('scenarios', scenario("number"))
+save(sprintf('scenarios/%s/results.mat', scenario("number")), "U_star", "X_star", "V_star", "params", "scenario")
+fc_0 = params("T")/params("nt") * sum(FC(X_0, V_0, U_0, scenario, params), "all");
+fc_star = params("T")/params("nt") * sum(FC(X_star, V_star, U_star, scenario, params), "all");
+fig_0 = plot_x_v(X_0, V_0, params, scenario);
+saveas(fig_0, sprintf('scenarios/%s/initial.png', scenario("number")))
+fig_star = plot_x_v(X_star, V_star, params, scenario);
+saveas(fig_star, sprintf('scenarios/%s/final.png', scenario("number")))
+
+reduction = (fc_0 - fc_star)/fc_0;
