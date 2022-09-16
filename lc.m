@@ -10,7 +10,8 @@ function [A, b] = lc(params, scenario)
     T = tril(T);
 %     V = v_0 * ones(params("nt"), 1) + T*U;
 %     X = x_0 * ones(params("nt"), 1) + v_0 * params("t_int") + T*T*U;
-    A = [T*T; -T]; 
-    b = [X_l - x_0 * ones(params("nt"), 1) - v_0 * params("t_int") - params("eps")* ones(params("nt"), 1); ...
-        v_0 * params("t_int")];
+    A = [T*T; -T*T;  -T]; 
+    b = [X_l - x_0 - v_0 * params("t_int") - params("l") - params("eps"); ...
+        params("gamma") - X_l + x_0 + v_0 * params("t_int") + params("l"); ...
+        v_0 * ones(params("nt"), 1)];
 end

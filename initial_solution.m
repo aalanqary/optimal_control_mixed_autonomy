@@ -1,16 +1,16 @@
-function [X_0, V_0, U_0] = initial_solution(scenario, params)
-    original_I_a = scenario("I_a");
-    scenario("config") = zeros(1, length(scenario("config")));
-    scenario("I_a") = find(scenario("config"));
-    scenario("I_h") = find(scenario("config") - 1);
-%     params("l") = 2 * params("l");
-    [X_0, V_0] = system_solve(zeros(params("nt"), 1), params, scenario);
-    xl = scenario("x_leader");
-    xl = xl(params("t_int"));
-    vl = scenario("v_leader");
-    vl = vl(params("t_int"));
-    X_l = [xl, X_0]; 
-    V_l = [vl, V_0]; 
-    U_0 = ACC(X_l(:, original_I_a), X_0(:, original_I_a), ... 
-              V_l(:, original_I_a), V_0(:, original_I_a), params);
+function [X0, V0, U0] = initial_solution(scenario, params)
+      if params("initalize") == "IDM"
+          original_I_a = scenario("Ia");
+          scenario("config") = zeros(1, length(scenario("config")));
+          scenario("Ia") = find(scenario("config"));
+          scenario("Ih") = find(scenario("config") - 1);
+          params("l") = 10 * params("l");
+          U_temp = @(t) []; 
+          [X0, V0, U0] = system_solve(U_temp, params, scenario);
+          U0 = U0(:, original_I_a);
+      else
+          error("Initialization method not found")
+      end 
+%       Fu = griddedInterpolant(scenario("time"),U0);
+%       U0 = @(t) Fu(t);
 end 
