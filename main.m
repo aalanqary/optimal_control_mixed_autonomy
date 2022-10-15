@@ -7,7 +7,7 @@ scenario = prepare_data(data_dir, data_file.name, 2, platoon, 1000);
 
 %specify parameters
 params = containers.Map;
-params("ode_opt") = []; %odeset('RelTol',1e-8,'AbsTol',1e-10);
+params("ode_opt") = odeset('RelTol',1e-8,'AbsTol',1e-10); % []
 % IDM params
 params("safe_dist") = 2.5; %float
 params("v_max") = 35; %float
