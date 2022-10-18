@@ -1,21 +1,21 @@
-function [X, V, A] = system_solve(U, params, scenario)
+function [X, V, A] = system_solve(U, params, scenario_simple)
 
-    [~, XV] = ode15s(@(t,XV) F(t, XV, U(t)', scenario, params), scenario("time"), [scenario("x0"); scenario("v0")], params("ode_opt"));
-    V = XV(:, end - length(scenario("config")) + 1: end);
-    X = XV(:, 1:end - length(scenario("config")));
+    [~, XV] = ode15s(@(t,XV) F(t, XV, U(t)', scenario_simple, params), scenario_simple("time"), [scenario_simple("x0"); scenario_simple("v0")], params("ode_opt"));
+    V = XV(:, end - length(scenario_simple("config")) + 1: end);
+    X = XV(:, 1:end - length(scenario_simple("config")));
     
     if nargout > 2
         A = zeros(size(X));
-        xl = scenario("xl");
-        xl = xl(scenario("time"));
-        vl = scenario("vl");
-        vl = vl(scenario("time"));
+        xl = scenario_simple("xl");
+        xl = xl(scenario_simple("time"));
+        vl = scenario_simple("vl");
+        vl = vl(scenario_simple("time"));
         Xl = [xl, X]; 
         Vl = [vl, V]; 
-        Ah = ACC(Xl(:, scenario("Ih")), X(:, scenario("Ih")), ... 
-                      Vl(:, scenario("Ih")), V(:, scenario("Ih")), params); 
-        A(:, scenario("Ih")) = Ah;
-        A(:, scenario("Ia")) = U(scenario("time")); 
+        Ah = ACC(Xl(:, scenario_simple("Ih")), X(:, scenario_simple("Ih")), ... 
+                      Vl(:, scenario_simple("Ih")), V(:, scenario_simple("Ih")), params); 
+        A(:, scenario_simple("Ih")) = Ah;
+        A(:, scenario_simple("Ia")) = U(scenario_simple("time")); 
     end 
     
 %     Linear solver
@@ -31,22 +31,22 @@ function [X, V, A] = system_solve(U, params, scenario)
 
 end 
 
-function XV_dot = F(t, XV, U, scenario, params) 
-    X = XV(1:length(scenario("config")));
-    V = XV(length(scenario("config")) + 1: end);
+function XV_dot = F(t, XV, U, scenario_simple, params) 
+    X = XV(1:length(scenario_simple("config")));
+    V = XV(length(scenario_simple("config")) + 1: end);
     
-    xl = scenario("xl");
+    xl = scenario_simple("xl");
     xl = xl(t);
-    vl = scenario("vl");
+    vl = scenario_simple("vl");
     vl = vl(t);
     Xl = [xl; X]; 
     Vl = [vl; V]; 
-    a = ACC(Xl(scenario("Ih")), X(scenario("Ih")), ... 
-                                 Vl(scenario("Ih")), V(scenario("Ih")), ...
+    a = ACC(Xl(scenario_simple("Ih")), X(scenario_simple("Ih")), ... 
+                                 Vl(scenario_simple("Ih")), V(scenario_simple("Ih")), ...
                                  params);
     X_dot = V;
     V_dot = zeros(length(V), 1);
-    V_dot(scenario("Ih")) = a;
-    V_dot(scenario("Ia")) = U; 
+    V_dot(scenario_simple("Ih")) = a;
+    V_dot(scenario_simple("Ia")) = U; 
     XV_dot = [X_dot; V_dot];
 end 
