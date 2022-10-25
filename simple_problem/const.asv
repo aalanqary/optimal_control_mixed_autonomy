@@ -1,0 +1,10 @@
+function f = const(U, auxdata)  
+    [time_XV, ~, V] = system_solve(U, auxdata);
+    U_t = ; %todo: Make the vector U have the same dim as the vector V
+    phi_1 = (V(end)).^2; 
+    h = -auxdata.g + auxdata.k3*V.^2 - abs(U_t);
+    h = h * (h < auxdata.eps) - ...
+        ((h - auxdata.eps).^2/3*eps) * ((-auxdata.eps <= h) .* (h <= auxdata.eps));
+    int_L_1 = diff(-auxdata.gamma - h) ./ diff(time_XV); 
+    f1 = phi_1 + sum(int_L_1);
+end

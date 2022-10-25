@@ -1,0 +1,6 @@
+function f = objective(U, auxdata)  
+    [time_XV, ~, V] = system_solve(U, auxdata);
+    phi_0 = 0;
+    int_L_0 = -diff(V)./diff(time_XV);
+    f = phi_0 + sum(int_L_0); 
+end

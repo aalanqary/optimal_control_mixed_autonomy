@@ -1,36 +1,45 @@
-params = containers.Map;
-params("T") = 
-params("k0") = 
-params("k1") = 
-params("n") = 
-params("k2") = 
-params("g") = 
-params("k3") = 
+% Specify problem params
+auxdata.T = 10;
+auxdata.g = 9.81;
+auxdata.k0 = auxdata.g*0.02;
+auxdata.k1 = auxdata.g*1e-5;
+auxdata.k2 = auxdata.g*1e-4;
+auxdata.k3  = auxdata.g*2e-4;
 
-u0 = 0 * zeros(n, 1); %column vector
+% Specify problem size 
+auxdata.N = 100;
+auxdata.h = auxdata.T/auxdata.N;
 
+% Specify IPOPT options
+% options.auxdata = auxdata;
+
+
+z = 1 * ones(auxdata.N, 1); %column vector
+% z = [9.81 * ones(auxdata.N/2, 1); -9.81 * ones(auxdata.N/2, 1)];
 
 %% Run Optimizaer 
 
-%options = optimoptions('fmincon','Display','iter-detailed', ...
-                        %'SpecifyObjectiveGradient',params("use_gradient"),...
-                        %'FunValCheck','on', 'DerivativeCheck', 'off',...
-                        %'maxfunevals',1e6, 'StepTolerance',1e-12, ...
-                        %'algorithm', 'interior-point');
+options = optimoptions('fmincon','Display','iter-detailed', ...
+                        'SpecifyObjectiveGradient', true,...
+                        'FunValCheck','on', 'DerivativeCheck', 'off',...
+                        'maxfunevals',1e6, 'StepTolerance',1e-12, ...
+                        'algorithm', 'interior-point');
 
-fun = @(U) objective_gradient(U, params, scenario); % work on this right now
+fun = @(U) objective(U, auxdata);
 % Nonlinear constraints: accepts a vector or array x and returns two arrays, c(x) and ceq(x)
-nonlcon = @(U) nlc(U, params, scenario);
+nonlcon = @(U) const(U, auxdata);
 A = [];
 b = [];
 % [A, b] = lc(params, scenario); 
 Aeq = []; beq = []; 
-a_min = -3 * ones(size(U0)); 
-a_max = 1.5 * ones(size(U0));
-
-funcs.objective = @(U) U;
-funcs.gradient = fun;
-funcs.constraints = @(nonlcol) nonlcol;
+lb = []; ub = [];
+[U_star,~,~,~,~,grad,~] = fmincon(fun, z, A, b, Aeq, beq, lb,ub,nonlcon,options);
+% a_min = -3 * ones(size(U0)); 
+% a_max = 1.5 * ones(size(U0));
+% 
+% funcs.objective = @(U) U;
+% funcs.gradient = fun;
+% funcs.constraints = @(nonlcol) nonlcol;
 % Jacobian
 %funcs.jacobian  = @(nonlcol) jacobian(nonlcol, U);
 %funcs.jacobian = @train_NLP_constraints_jacobian;
