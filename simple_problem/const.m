@@ -1,18 +1,19 @@
 function [c, ceq] = const(U, auxdata)  
-    [time_XV, ~, V] = system_solve(U, auxdata);
+    [time_XV, ~, V] = system_solve(U, auxdata); % Given the control input, solve for X and V
     ceq = V(end);
     c = [U - auxdata.g - auxdata.k3 * V.^2;
         - U - auxdata.g - auxdata.k3 * V.^2];
 
-    [time_XV, ~, V] = system_solve(U, auxdata);
-    U_t = U[]; %todo: Make the vector U have the same dim as the vector V
+    U_t = U; %todo: Make the vector U have the same dim as the vector V
 
     phi_1 = (V(end)).^2; 
     h1 = auxdata.g + auxdata.k3*V.^2 - U_t; % >= 0  would this be c[2]
-    h1 = h1 * (h1 < auxdata.eps) - ((h1 - auxdata.eps).^2/4*auxdata.eps) * ((-auxdata.eps <= h1) & (auxdata.eps >= h1)) % changed to 4 from 3 for coefficent
+    bound_h1 = (-auxdata.eps <= h1) + (auxdata.eps >= h1);
+    h1 = h1 * (h1 < auxdata.eps) - ((h1 - auxdata.eps).^2/4*auxdata.eps) * (bound_h1 >= 2);
 
     h2 =  U_t - auxdata.g - auxdata.k3*V.^2; % >= 0 would this be c[1]
-    h2 = h2 * (h2 < auxdata.eps) - ((h2 - auxdata.eps).^2/4*auxdata.eps) * ((-auxdata.eps <= h2) & (auxdata.eps >= h2))
+    bound_h2 = (-auxdata.eps <= h2) + (auxdata.eps >= h2);
+    h2 = h2 * (h2 < auxdata.eps) - ((h2 - auxdata.eps).^2/4*auxdata.eps) * (bound_h2 >= 2);
     
     
     int_L_1 = diff(h1) ./ diff(time_XV); 
