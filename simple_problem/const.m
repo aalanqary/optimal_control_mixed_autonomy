@@ -1,8 +1,8 @@
 function [c, ceq] = const(U, auxdata)  
     [time_XV, ~, V] = system_solve(U, auxdata);
     ceq = V(end);
-    c = [U - auxdata.g - auxdata.k3 * V.^2;
-        - U - auxdata.g - auxdata.k3 * V.^2];
+    c = [U - auxdata.g - auxdata.k3 * V(1:end-1).^2;
+        - U - auxdata.g - auxdata.k3 * V(1:end-1).^2];
 
 %     [time_XV, ~, V] = system_solve(U, auxdata);
 %     U_t = ; %todo: Make the vector U have the same dim as the vector V

@@ -14,7 +14,7 @@ auxdata.h = auxdata.T/auxdata.N;
 % options.auxdata = auxdata;
 
 
-z = 1 * ones(auxdata.N, 1); %column vector
+z = 0 * ones(auxdata.N, 1); %column vector
 % z = [9.81 * ones(auxdata.N/2, 1); -9.81 * ones(auxdata.N/2, 1)];
 
 %% Run Optimizaer 
@@ -27,7 +27,7 @@ options = optimoptions('fmincon','Display','iter-detailed', ...
 
 fun = @(U) objective(U, auxdata);
 % Nonlinear constraints: accepts a vector or array x and returns two arrays, c(x) and ceq(x)
-nonlcon = @(U) const(U, auxdata);
+nonlcon = [];%@(U) const(U, auxdata);
 A = [];
 b = [];
 % [A, b] = lc(params, scenario); 
