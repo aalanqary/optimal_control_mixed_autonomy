@@ -22,13 +22,10 @@
 %  norm2:          is empty if  compute_accuracy=false
 
 % No formal inputs for now
-function [z,elapsed,ok] = bang_bang_ipopt_test()
+function [z,elapsed,ok] = bang_bang_ipopt_test(auxdata, use_hessian)
 
   % 10 samples for test
   N = auxdata.N
-
-  % Total time
-  T = 20
 
   lb = [ -Inf*ones(2*(N+1),1) ; -Inf*ones(N,1) ] ; % Lower bound constraints to -infinity
   ub = [  Inf*ones(2*(N+1),1) ;  Inf*ones(N,1) ] ;
@@ -56,8 +53,8 @@ function [z,elapsed,ok] = bang_bang_ipopt_test()
   funcs.objective         = @objective;
   funcs.gradient          = @gradient;
   funcs.constraints       = @constraints;
-  funcs.jacobian          = @direct_method_constraints_jacobian;
-  funcs.jacobianstructure = @direct_method_constraints_jacobian_pattern;
+  funcs.jacobian          = @jacobian;
+  funcs.jacobianstructure = @jacobian_pattern;
   if use_hessian
     funcs.hessian           = @direct_method_hessian;
     funcs.hessianstructure  = @direct_method_hessian_pattern;

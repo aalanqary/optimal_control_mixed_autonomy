@@ -1,4 +1,4 @@
-function f = objective(z)
+function f = objective(z, auxdata)
 %OBJECTIVE Numerical solution with direct method, evaluates velocities
 %between time frames
 

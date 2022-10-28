@@ -1,4 +1,4 @@
-function f = constraints(z)
+function f = constraints(z, auxdata)
    
     %Extract variables from z setup
     N = auxdata.N;

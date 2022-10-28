@@ -1,10 +1,11 @@
-function grad = gradient(z)
+function grad = gradient(z, auxdata)
 %OBJECTIVE Numerical solution with direct method, evaluates velocities
 %between time frames
 
     %Extract variables from z setup
     N = auxdata.N;
     T = auxdata.T_size;
+    nvars = auxdata.nvars
     
     start_v = N+1;
     start_u = start_v + N+1;
