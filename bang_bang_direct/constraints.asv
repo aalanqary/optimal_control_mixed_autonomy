@@ -1,8 +1,8 @@
-function f = constraints(z)
+function f = constraints(z, auxdata)
    
     %Extract variables from z setup
-    N = 10;
-    T=20;
+    N = auxdata.N;
+    T = auxdata.T_size;
     
     start_v = N+1;
     start_u = start_v + N+1;
@@ -24,11 +24,17 @@ function f = constraints(z)
     delta_v = v(2:end) - v(1:end-1);
 
     % Constraints extracted from page 159 of Numerical Optimal Controls
-    % paper. Discretized as follows
+    % paper. Discretized as follow
+    % Using uk+1/2 potentially because inputs are
     c1 = delta_x + h*vave;
     c2 = delta_v - h*(u - k0 - vave.*(k1+k2*vave)) ; 
-    c3 = x(1)
-    c4 = v(1)
-    c(5) = v(end)
-    
+    c3 = x(1);
+    c4 = v(1);
+    c5 = v(end);
+    c6 = (g + k3*vave.^2) + u;
+    c7 = (g+k3*vave.^2)-u;
+
+    % Return constraints
+    f = [c1; c2; c3; c4; c5; c6; c7] ;
+   
 end
