@@ -1,22 +1,20 @@
-function [f, df, Hu, ll, time_XV] = objective(U, auxdata)  
-    % Objective 
-    tau = linspace(0, auxdata.T, auxdata.N + 1);
-    [time_XV, ~, V] = system_solve(U, auxdata);
-    V = griddedInterpolant(time_XV, V, "cubic");
-    phi_0 = 0;
-%     int_L_0 = -diff(V) .* diff(time_XV);
-    int_L_0 = arrayfun(@(a,b) integral(@(t) V(t), a, b), tau(1:end-1), tau(2:end));  
-    f = phi_0 + sum(int_L_0); 
+function [f, df] = objective(U, auxdata)  
+    [time_v, v] = system_solve(U, auxdata);
+    f = -trapz(time_v, v);
     
-    %Gradient
-    V = griddedInterpolant(time_XV, V, "previous"); %Todo: maybe we need to fixe the time step for forward and backward system 
+    % Gradient
     lambda0 = 0;
-    [~, Lambda] = ode15s(@(t,lambda) -1 + lambda *(auxdata.k1 - 2*auxdata.k2*V(t)), flip(time_XV), lambda0);
-    ll= Lambda;
-    Hu = diff(flip(Lambda)).*diff(time_XV);
-    Lambda = griddedInterpolant(time_XV, flip(Lambda), "previous");
-    
-    df = arrayfun(@(a,b) integral(@(t) Lambda(t), a, b), tau(1:end-1), tau(2:end));  
-    
-%     Hu = griddedInterpolant(time_XV, Lambda, "previous");
+    v = griddedInterpolant(time_v, v, "linear");
+    Lambda = ode5(@(t,lambda) -1 + lambda *(auxdata.k1 - 2*auxdata.k2*v(t)), flip(time_v), lambda0);    
+    Lambda = flip(Lambda);
+%     Lambda = griddedInterpolant(time_v, Lambda, "linear");
+%     df = arrayfun(@(a,b) integral(@(t) -Lambda(t), a, b), auxdata.tau(1:end-1), auxdata.tau(2:end));  
+%     df = [df, df(end)];
+%     Lambda = griddedInterpolant(time_XV, flip(Lambda), "cubic");
+    df = -Lambda * 0.1; 
+
+%     figure(3);
+%     plot(df);
+%     drawnow;
+%     pause(5);
 end

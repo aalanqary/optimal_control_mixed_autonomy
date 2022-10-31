@@ -1,30 +1,52 @@
 function [c, ceq] = const(U, auxdata)  
-    [time_XV, ~, V] = system_solve(U, auxdata); % Given the control input, solve for X and V
-    ceq = V(end);
-    c = [U - auxdata.g - auxdata.k3 * V(1:end-1).^2;
-        - U - auxdata.g - auxdata.k3 * V(1:end-1).^2];
-
-    U_t = U; %todo: Make the vector U have the same dim as the vector V
-
-    phi_1 = (V(end)).^2; 
-    h1 = auxdata.g + auxdata.k3*V.^2 - U_t; % >= 0  would this be c[2]
-    bound_h1 = (-auxdata.eps <= h1) + (auxdata.eps >= h1);
-    h1 = h1 * (h1 < auxdata.eps) - ((h1 - auxdata.eps).^2/4*auxdata.eps) * (bound_h1 >= 2);
-
-    h2 =  U_t - auxdata.g - auxdata.k3*V.^2; % >= 0 would this be c[1]
-    bound_h2 = (-auxdata.eps <= h2) + (auxdata.eps >= h2);
-    h2 = h2 * (h2 < auxdata.eps) - ((h2 - auxdata.eps).^2/4*auxdata.eps) * (bound_h2 >= 2);
+    % c(x, u) <= 0 
+    % ceq(x, u) = 0
+    c = [];
+    [time_v, v] = system_solve(U, auxdata); 
+    v = griddedInterpolant(time_v, v, "previous");
+    v = v(auxdata.tau);
     
+    if isrow(v)
+        v = v';
+    end 
+    if isrow(U)
+        U = U'; 
+    end 
     
-    int_L_1 = diff(h1) ./ diff(time_XV); 
-    f1 = phi_1 + sum(int_L_1+1);
+    if false
+        % First constraint (eq): v(T) = 0  
+        ceq(1) = v(end); 
+        
+        c = [U - auxdata.g - auxdata.k3 * v.^2; % Second constraint (ineq): u(t) <= g + k3 * v(t)
+            - U - auxdata.g - auxdata.k3 * v.^2]; % Third constraint (ineq): u(t) >= -g - k3 * v(t)
+    end 
 
-    int_L_2 = diff(h2) ./ diff(time_XV); 
-    f2 = phi_1 + sum(int_L_2+1);
+    if false
+        % First constraint (eq): v(T) = 0  
+        ceq(1) = v(end); 
+        % Second constraint (ineq): u(t) <= g + k3 * v(t)
+        h1 = auxdata.g + auxdata.k3 * v - U;
+        ceq(2) = sum(min(h1, 0).^2);
+        % Third constraint (ineq): u(t) >= -g - k3 * v(t)
+        h2 =  auxdata.g + auxdata.k3*v.^2 + U; 
+        ceq(3) = sum(min(h2, 0).^2);
 
-    % [Nonlinear inequality constraints, Nonlinear equality constraints]
-    % intial c = [U - auxdata.g - auxdata.k3 * V.^2;
-       % - U - auxdata.g - auxdata.k3 * V.^2];
-    c(1) = f1;
-    c(2) = f2;
+        c = [];
+    end 
+
+    if true
+        % First constraint (eq): v(T) = 0  
+        ceq(1) = v(end); 
+        % Second constraint (ineq): u(t) <= g + k3 * v(t)
+        h1 = auxdata.g + auxdata.k3 * v - U;
+        bound_h1 = (-auxdata.eps <= h1) + (auxdata.eps >= h1);
+        pi_1 = h1 .* (h1 < -auxdata.eps) - (((h1 - auxdata.eps).^2)/4*auxdata.eps) .* (bound_h1 >= 2);
+        c(1) = - auxdata.gamma - trapz(auxdata.tau, pi_1);
+        % Third constraint (ineq): u(t) >= -g - k3 * v(t)
+        h2 =  auxdata.g + auxdata.k3*v.^2 + U; 
+        bound_h2 = (-auxdata.eps <= h2) + (auxdata.eps >= h2);
+        pi_2 = h2 .* (h2 < -auxdata.eps) - ((h2 - auxdata.eps).^2/4*auxdata.eps) .* (bound_h2 >= 2);
+        c(2) = - auxdata.gamma - trapz(auxdata.tau, pi_2);
+    end 
+
 end

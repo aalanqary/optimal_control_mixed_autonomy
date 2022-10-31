@@ -1,7 +1,5 @@
-function [X, V] = system_solve(U, params)
-    time = linspace(0, params("T"), params("n"));
-    U = griddedInterpolant(time,U);
-    [t, XV] = ode15s(@(t,xv) [xv(2); U(t) - params("k0") - params("k1")*xv(2) - params("k2")*xv(2)^2], time, [0; 0]);
-    V = XV(:, 2); 
-    X = XV(:, 1); 
+function [time_v, v] = system_solve(U, auxdata)
+    tau = linspace(0, auxdata.T, auxdata.N);
+    U = griddedInterpolant(tau, U, "previous");
+    [time_v, v] = ode45(@(t,v) U(t) - auxdata.k0 - auxdata.k1*v - auxdata.k2*v^2, tau, 0);
 end 
