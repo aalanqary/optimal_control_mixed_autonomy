@@ -1,5 +1,0 @@
-function [time_v, v] = system_solve(U, auxdata)
-    tau = linspace(0, auxdata.T, auxdata.N);
-    U = griddedInterpolant(tau, U, "previous");
-    [time_v, v] = ode45(@(t,v) U(t) - auxdata.k0 - auxdata.k1*v - auxdata.k2*v^2, tau, 0);
-end 
