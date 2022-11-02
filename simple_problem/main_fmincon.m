@@ -11,7 +11,6 @@ auxdata.N = 10;
 auxdata.N_state = 100; 
 auxdata.h = auxdata.T/auxdata.N;
 auxdata.tau = linspace(0, auxdata.T, auxdata.N);
-
 % Specify constraints params
 auxdata.eps = 0.01;
 auxdata.gamma = 0.0001;
