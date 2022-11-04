@@ -34,6 +34,7 @@ function [c, ceq] = const(U, auxdata)
         c = [];
     end 
 
+    % Using Traditional Approach
     if true
         % First constraint (eq): v(T) = 0  
         ceq(1) = v(end); 
