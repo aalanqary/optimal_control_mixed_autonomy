@@ -39,7 +39,7 @@ function [c, ceq] = const(U, auxdata)
         % First constraint (eq): v(T) = 0  
         ceq(1) = v(end); 
         % Second constraint (ineq): u(t) <= g + k3 * v(t)
-        h1 = auxdata.g + auxdata.k3 * v - U;
+        h1 = auxdata.g + auxdata.k3 * v.^2 - U;
         bound_h1 = (-auxdata.eps <= h1) + (auxdata.eps >= h1);
         pi_1 = h1 .* (h1 < -auxdata.eps) - (((h1 - auxdata.eps).^2)/4*auxdata.eps) .* (bound_h1 >= 2);
         c(1) = - auxdata.gamma - trapz(auxdata.tau, pi_1);

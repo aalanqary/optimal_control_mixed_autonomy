@@ -6,9 +6,9 @@ function [dc, dceq] = const_grad(U, auxdata)
 
     %For first constraint: 
     lambdaT_1 = 1;
-    Lambda_1 = ode5(@(t,lambda) -lambda *(auxdata.k1 - 2*auxdata.k2*v(t)), flip(time_v), lambdaT_1); 
+    Lambda_1 = ode5(@(t,lambda) lambda *(auxdata.k1 - 2*auxdata.k2*v(t)), flip(time_v), lambdaT_1); 
     Lambda_1 = griddedInterpolant(time_v, Lambda_1, "linear");
-    df1 = arrayfun(@(a,b) integral(@(t) -Lambda_1(t), a, b), auxdata.tau(1:end-1), auxdata.tau(2:end));  
+    df1 = arrayfun(@(a,b) integral(@(t) Lambda_1(t), a, b), auxdata.tau(1:end-1), auxdata.tau(2:end));  
     if isrow(df1)
         df1 = df1';
     end 
@@ -42,25 +42,25 @@ end
 function f = f_adj_2(u, v, lambda, auxdata)
     h = auxdata.g + auxdata.k3*v^2 - u; 
     if h < -auxdata.eps
-        f = auxdata.g + auxdata.k3 * v^2 - u; 
+        f = 2*auxdata.k3*v;
     elseif (h >= -auxdata.eps) && (h<= auxdata.eps)
-        f = (1/4*auxdata.eps) * (4*auxdata.k3^2 * v^3 - 4*auxdata.k3*v*(auxdata.g - u - auxdata.eps));
+        f = (-1/4*auxdata.eps) * (4*auxdata.k3^2 * v^3 + 4*auxdata.k3*v*(auxdata.g - u - auxdata.eps));
     else
         f = 0; 
     end
-    f = f - lambda * (auxdata.k1 + 2*auxdata.k2 * v);
+    f = f + lambda * (auxdata.k1 + 2*auxdata.k2 * v);
 end 
 
 function f = f_adj_3(u, v, lambda, auxdata)
     h = auxdata.g + auxdata.k3*v^2 + u; 
     if h < -auxdata.eps
-        f = auxdata.g + auxdata.k3 * v^2 + u; 
+        f = 2*auxdata.k3*v(t);
     elseif (h >= -auxdata.eps) && (h<= auxdata.eps)
-        f = (1/4*auxdata.eps) * (4*auxdata.k3^2 * v^3 - 4*auxdata.k3*v*(auxdata.g + u - auxdata.eps));
+        f = (-1/4*auxdata.eps) * (4*auxdata.k3^2 * v^3 + 4*auxdata.k3*v*(auxdata.g + u - auxdata.eps));
     else
         f = 0; 
     end
-    f = f - lambda * (auxdata.k1 + 2*auxdata.k2 * v);
+    f = f + lambda * (auxdata.k1 + 2*auxdata.k2 * v);
 end 
 
 function f = f_int_2(u, v, lambda, auxdata)
@@ -68,8 +68,8 @@ function f = f_int_2(u, v, lambda, auxdata)
     bound_h = (-auxdata.eps <= h) + (auxdata.eps >= h);
     
     f = -1 * (h < -auxdata.eps) + ...
-        ((1/4*auxdata.eps) * (2 * u - 2*(auxdata.g + auxdata.k3*v.^2 - auxdata.eps))) .* (bound_h >= 2); 
-    f = f + lambda;
+        (-(1/4*auxdata.eps) * (2 * u - 2*(auxdata.g + auxdata.k3*v.^2 - auxdata.eps))) .* (bound_h >= 2); 
+    f = -f + lambda; 
 end 
 
 
@@ -77,6 +77,6 @@ function f = f_int_3(u, v, lambda, auxdata)
     h = auxdata.g + auxdata.k3*v.^2 + u; 
     bound_h = (-auxdata.eps <= h) + (auxdata.eps >= h);
     f = 1 * (h < -auxdata.eps) + ...
-        ((1/4*auxdata.eps) * (2 * u + 2*(auxdata.g + auxdata.k3*v.^2 - auxdata.eps))) .* (bound_h >= 2); 
-    f = f + lambda;
+        (-(1/4*auxdata.eps) * (2 * u + 2*(auxdata.g + auxdata.k3*v.^2 - auxdata.eps))) .* (bound_h >= 2); 
+    f = -f + lambda;
 end 

@@ -12,8 +12,8 @@ auxdata.N_state = 100;
 auxdata.h = auxdata.T/auxdata.N;
 auxdata.tau = linspace(0, auxdata.T, auxdata.N);
 % Specify constraints params
-auxdata.eps = 0.01;
-auxdata.gamma = 0.0001;
+auxdata.eps = 0;
+auxdata.gamma = 0;
 
 z = auxdata.k0 * ones(1, auxdata.N); %column vector
 z = sin(auxdata.tau);
@@ -43,5 +43,8 @@ end
 
 function [c, ceq, dc, dceq] = constraint_gradient(U, auxdata)
     [c, ceq] = const(U, auxdata); 
-    [dc, dceq] = const_grad(U, auxdata);
+    if nargout > 2 
+        [dc, dceq] = const_grad(U, auxdata);
+    end 
+    
 end 
