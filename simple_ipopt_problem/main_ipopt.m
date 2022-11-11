@@ -25,9 +25,13 @@ options = optimoptions('fmincon','Display','iter-detailed', ...
                         'maxfunevals',1e6, 'StepTolerance',1e-12, ...
                         'algorithm', 'interior-point');
 
-fun = @(U) objective_gradient(U, auxdata);
+obj = @(U) objective_gradient(U, auxdata);
+funcs.objective = obj(1);
+funcs.gradient = obj(2);
+const = @(U) constraint_gradient(U, auxdata);
+funcs.const = const(1);
 % Nonlinear constraints: accepts a vector or array x and returns two arrays, c(x) and ceq(x)
-nonlcon = @(U) constraint_gradient(U, auxdata);
+funcs.jacobian = const(2);
 A = [];
 b = [];
 % [A, b] = lc(params, scenario); 
