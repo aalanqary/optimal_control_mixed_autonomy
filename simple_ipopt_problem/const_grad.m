@@ -48,7 +48,7 @@ function f = f_adj_2(u, v, lambda, auxdata)
     else
         f = 0; 
     end
-    f = f + lambda * (auxdata.k1 + 2*auxdata.k2 * v);
+    f = f + lambda *(auxdata.k1 + 2*auxdata.k2*v(t));
 end 
 
 function f = f_adj_3(u, v, lambda, auxdata)
@@ -60,7 +60,7 @@ function f = f_adj_3(u, v, lambda, auxdata)
     else
         f = 0; 
     end
-    f = f + lambda * (auxdata.k1 + 2*auxdata.k2 * v);
+    f = f + lambda *(auxdata.k1 + 2*auxdata.k2*v(t));
 end 
 
 function f = f_int_2(u, v, lambda, auxdata)

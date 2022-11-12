@@ -17,13 +17,10 @@ auxdata.gamma = 0;
 
 z = auxdata.k0 * ones(1, auxdata.N); %column vector
 z = sin(auxdata.tau);
+a_min = -3 * ones(size(z)); 
+a_max = 1.5 * ones(size(z));
 %% Run Optimizer 
-options = optimoptions('fmincon','Display','iter-detailed', ...
-                        'SpecifyObjectiveGradient', true ,...
-                        'SpecifyConstraintGradient', false, ...
-                        'FunValCheck','on', 'DerivativeCheck', 'off',...
-                        'maxfunevals',1e6, 'StepTolerance',1e-12, ...
-                        'algorithm', 'interior-point');
+
 
 obj = @(U) objective_gradient(U, auxdata);
 funcs.objective = obj(1);
@@ -36,7 +33,20 @@ A = [];
 b = [];
 % [A, b] = lc(params, scenario); 
 Aeq = []; beq = []; 
-[U_star,~,~,~,~,grad,~] = fmincon(fun, z, [], [], [], [], [],[],nonlcon,options);
+
+% Lower/Upper bounds on constraints - these might not be correct
+option.cl = a_min;    
+option.cu = a_max;
+
+% Set the IPOPT options -These might have to change
+option.ipopt.print_level           = 3;
+option.ipopt.jac_c_constant        = 'yes';
+option.ipopt.hessian_approximation = 'limited-memory';
+option.ipopt.mu_strategy           = 'adaptive';
+option.ipopt.tol                   = 1e-7;
+
+[U_star, info] = ipopt(z,funcs,option);
+% [U_star,~,~,~,~,grad,~] = fmincon(fun, z, [], [], [], [], [],[],nonlcon,options);
 [time_v, v] = system_solve(U_star, auxdata);
 
 

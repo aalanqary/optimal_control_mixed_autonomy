@@ -57,7 +57,7 @@ funcs.constraints = @(nonlcol) nonlcol;
 x0 = X0;
 
 
-% Lower/Upper bounds on constraints (don't know if these are correct
+% Lower/Upper bounds on constraints (don't know if these are correct)
 option.cl = a_min;    
 option.cu = a_max;
 
