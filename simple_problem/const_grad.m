@@ -6,7 +6,7 @@ function [dc, dceq] = const_grad(U, auxdata)
 
     %For first constraint: 
     lambdaT_1 = 1;
-    Lambda_1 = ode5(@(t,lambda) lambda *(auxdata.k1 - 2*auxdata.k2*v(t)), flip(time_v), lambdaT_1); 
+    Lambda_1 = ode5(@(t,lambda) lambda *(auxdata.k1 + 2*auxdata.k2*v(t)), flip(time_v), lambdaT_1); 
     Lambda_1 = griddedInterpolant(time_v, Lambda_1, "linear");
     df1 = arrayfun(@(a,b) integral(@(t) Lambda_1(t), a, b), auxdata.tau(1:end-1), auxdata.tau(2:end));  
     if isrow(df1)
