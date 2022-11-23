@@ -25,10 +25,19 @@ b_max = 1.5 * ones(size(z));
 
 funcs.objective = @(U) U;
 funcs.gradient = @(U) obj_grad(U, auxdata);
+%
 funcs.const = @(U) const(U, auxdata);
+
 % Nonlinear constraints: accepts a vector or array x and returns two arrays, c(x) and ceq(x)
-funcs.jacobian = @(U) const_grad(U, auxdata);
-funcs.jacobianstructure = @() sparse(ones(auxdata.N, auxdata.N));
+grad = @(U) const_grad(U, auxdata);
+% MxN matrix and needs to be sparse
+funcs.jacobian = @(U) sparse(jacobian(U, auxdata));
+display(funcs.jacobian)
+display(size(funcs.jacobian))
+%funcs.jacobianstructure = @() sparse(ones(size(funcs.jacobian)));
+% 10x10 matrix need to change this so that the 7 columns are zeros
+%figure out how to set m and n
+funcs.jacobianstructure = @() sparse(ones(3, 10));
 
 A = [];
 b = [];
@@ -50,8 +59,7 @@ option.ipopt.hessian_approximation = 'limited-memory';
 option.ipopt.mu_strategy           = 'adaptive';
 option.ipopt.tol                   = 1e-7;
 
-[U_star, info] = ipopt(z,funcs,option);
-% [U_star,~,~,~,~,grad,~] = fmincon(fun, z, [], [], [], [], [],[],nonlcon,options);
+[U_star, info] = ipopt_auxdata(z,funcs,option);
 [time_v, v] = system_solve(U_star, auxdata);
 
 
