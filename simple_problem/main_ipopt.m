@@ -14,26 +14,24 @@ auxdata.tau = linspace(0, auxdata.T, auxdata.N);
 % Specify constraints params
 auxdata.eps = 0;
 auxdata.gamma = 0;
-
+N = 10;
 z = auxdata.k0 * ones(1, auxdata.N); %column vector
 z = sin(auxdata.tau);
-a_min = -3 * ones(size(z)); 
-a_max = 1.5 * ones(size(z));
-b_min = -3 * ones(size(z)); 
-b_max = 1.5 * ones(size(z));
+lb = [ -Inf*ones(2*(N+1),1) ; -Inf*ones(N,1) ] ; % Lower bound constraints to -infinity
+ub = [  Inf*ones(2*(N+1),1) ;  Inf*ones(N,1) ] ;
+cl = [ zeros(2*N+3,1) ; zeros(2*N,1) ] ; % 2*N+3 equality constraints
+cu = [ zeros(2*N+3,1) ; Inf*ones(2*N,1) ] ;
 %% Run Optimizer 
 
-funcs.objective = @(U) U;
+funcs.objective = @(U) objective(U, auxdata);
 funcs.gradient = @(U) obj_grad(U, auxdata);
 %
 funcs.const = @(U) const(U, auxdata);
-
 % Nonlinear constraints: accepts a vector or array x and returns two arrays, c(x) and ceq(x)
 grad = @(U) const_grad(U, auxdata);
 % MxN matrix and needs to be sparse
+% is this only finding the gradient with respect to U
 funcs.jacobian = @(U) sparse(jacobian(U, auxdata));
-display(funcs.jacobian)
-display(size(funcs.jacobian))
 %funcs.jacobianstructure = @() sparse(ones(size(funcs.jacobian)));
 % 10x10 matrix need to change this so that the 7 columns are zeros
 %figure out how to set m and n
@@ -44,13 +42,12 @@ b = [];
 % [A, b] = lc(params, scenario); 
 Aeq = []; beq = []; 
 
-% Lower/Upper bounds on constraints - these might not be correct
-option.cl = a_min;    
-option.cu = a_max;
+options.lb = lb ; % Lower bound on the variables.
+options.ub = ub ; % Upper bound on the variables.
 
-% Lower/Upper bounds on variables - these might not be correct
-option.lb = b_min;    
-option.ub = b_max;
+% The constraint functions are bounded to zero
+options.cl = cl ;
+options.cu = cu ;
 
 % Set the IPOPT options -These might have to change
 option.ipopt.print_level           = 3;
@@ -58,10 +55,11 @@ option.ipopt.print_level           = 3;
 option.ipopt.hessian_approximation = 'limited-memory';
 option.ipopt.mu_strategy           = 'adaptive';
 option.ipopt.tol                   = 1e-7;
-
+% Set up the auxiliary data.
+options.auxdata = auxdata;
+  
 [U_star, info] = ipopt_auxdata(z,funcs,option);
-[time_v, v] = system_solve(U_star, auxdata);
-
+%[time_v, v] = system_solve(U_star, auxdata);
 
 function [f, df] = objective_gradient(U, auxdata)
     f = objective(U, auxdata); 

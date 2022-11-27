@@ -36,8 +36,8 @@ function [jac] = jacobian(U, auxdata)
     
     dc = [df2, df3];
     % should I just concatenate like this
-    jac = cat(2, dc, dceq);
-    % 10x 3 matrix, but ipopt needs a 10x10 matrix
+    jac = cat(2, dceq, dc);
+    % 10 x 3 matrix, but ipopt needs a 10x10 matrix
     %jac = cat(2, jac, zeros(10, 7));
     jac = jac';
     display(jac);
