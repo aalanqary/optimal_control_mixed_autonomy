@@ -19,8 +19,8 @@ z = auxdata.k0 * ones(1, auxdata.N); %column vector
 z = sin(auxdata.tau);
 lb = [ -Inf*ones(2*(N+1),1) ; -Inf*ones(N,1) ] ; % Lower bound constraints to -infinity
 ub = [  Inf*ones(2*(N+1),1) ;  Inf*ones(N,1) ] ;
-cl = [ zeros(2*N+3,1) ; zeros(2*N,1) ] ; % 2*N+3 equality constraints
-cu = [ zeros(2*N+3,1) ; Inf*ones(2*N,1) ] ;
+%cl = [ zeros(2*N+3,1) ; zeros(2*N,1) ] ; % 2*N+3 equality constraints
+%cu = [ zeros(2*N+3,1) ; Inf*ones(2*N,1) ] ;
 %% Run Optimizer 
 
 funcs.objective = @(U) objective(U, auxdata);
@@ -45,9 +45,13 @@ Aeq = []; beq = [];
 options.lb = lb ; % Lower bound on the variables.
 options.ub = ub ; % Upper bound on the variables.
 
-% The constraint functions are bounded to zero
-options.cl = cl ;
-options.cu = cu ;
+% The constraint functions are bounded to zero = 0;
+options.cl(1) =  0;
+options.cu(1) = 0;
+options.cl(2) = -Inf;
+options.cl(3) = -Inf;
+options.cu(2) = 0;
+options.cu(3) = 0;
 
 % Set the IPOPT options -These might have to change
 option.ipopt.print_level           = 3;
@@ -59,7 +63,7 @@ option.ipopt.tol                   = 1e-7;
 options.auxdata = auxdata;
   
 [U_star, info] = ipopt_auxdata(z,funcs,option);
-%[time_v, v] = system_solve(U_star, auxdata);
+[time_v, v] = system_solve(U_star, auxdata);
 
 function [f, df] = objective_gradient(U, auxdata)
     f = objective(U, auxdata); 
