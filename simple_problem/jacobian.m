@@ -25,8 +25,8 @@ function [jac] = jacobian(U, auxdata)
     df2 = [df2; 0];
 
     %For third constraint: 
-    lambdaT_2 = 0;
-    Lambda_3 = ode5(@(t,lambda) f_adj_3(U(t), v(t), lambda, auxdata), flip(time_v), lambdaT_2); 
+    lambdaT_3 = 0;
+    Lambda_3 = ode5(@(t,lambda) f_adj_3(U(t), v(t), lambda, auxdata), flip(time_v), lambdaT_3); 
     Lambda_3 = griddedInterpolant(time_v, Lambda_3, "linear");
     df3 = arrayfun(@(a,b) integral(@(t) -f_int_3(U(t), v(t), Lambda_3(t), auxdata), a, b), auxdata.tau(1:end-1), auxdata.tau(2:end));  
     if isrow(df3)
@@ -36,7 +36,7 @@ function [jac] = jacobian(U, auxdata)
     
     dc = [df2, df3];
     % should I just concatenate like this
-    jac = cat(2, dceq, dc);
+    jac = sparse(cat(2, dceq, dc));
     % 10 x 3 matrix, but ipopt needs a 10x10 matrix
     %jac = cat(2, jac, zeros(10, 7));
     jac = jac';

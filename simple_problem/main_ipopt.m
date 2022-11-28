@@ -17,41 +17,41 @@ auxdata.gamma = 0;
 N = 10;
 z = auxdata.k0 * ones(1, auxdata.N); %column vector
 z = sin(auxdata.tau);
-lb = [ -Inf*ones(2*(N+1),1) ; -Inf*ones(N,1) ] ; % Lower bound constraints to -infinity
-ub = [  Inf*ones(2*(N+1),1) ;  Inf*ones(N,1) ] ;
-%cl = [ zeros(2*N+3,1) ; zeros(2*N,1) ] ; % 2*N+3 equality constraints
-%cu = [ zeros(2*N+3,1) ; Inf*ones(2*N,1) ] ;
+lb = -Inf*ones(size(z))  ; % Lower bound constraints to -infinity
+ub = Inf*ones(size(z)) ;
+
 %% Run Optimizer 
 
-funcs.objective = @(U) objective(U, auxdata);
-funcs.gradient = @(U) obj_grad(U, auxdata);
+funcs.objective = @objective;
+funcs.gradient = @obj_grad;
 %
-funcs.const = @(U) const(U, auxdata);
+funcs.constraints = @const;
 % Nonlinear constraints: accepts a vector or array x and returns two arrays, c(x) and ceq(x)
-grad = @(U) const_grad(U, auxdata);
+grad = @const_grad;
 % MxN matrix and needs to be sparse
 % is this only finding the gradient with respect to U
-funcs.jacobian = @(U) sparse(jacobian(U, auxdata));
+funcs.jacobian = @jacobian;
 %funcs.jacobianstructure = @() sparse(ones(size(funcs.jacobian)));
 % 10x10 matrix need to change this so that the 7 columns are zeros
 %figure out how to set m and n
-funcs.jacobianstructure = @() sparse(ones(3, 10));
+funcs.jacobianstructure = @jacobianstructure;
 
 A = [];
 b = [];
 % [A, b] = lc(params, scenario); 
 Aeq = []; beq = []; 
 
-options.lb = lb ; % Lower bound on the variables.
-options.ub = ub ; % Upper bound on the variables.
+% don't need these - bounds for the variables
+option.lb = lb ; % Lower bound on the variables.
+option.ub = ub ; % Upper bound on the variables.
 
 % The constraint functions are bounded to zero = 0;
-options.cl(1) =  0;
-options.cu(1) = 0;
-options.cl(2) = -Inf;
-options.cl(3) = -Inf;
-options.cu(2) = 0;
-options.cu(3) = 0;
+option.cl(1) =  0;
+option.cu(1) = 0;
+option.cl(2) = -Inf;
+option.cl(3) = -Inf;
+option.cu(2) = 0;
+option.cu(3) = 0;
 
 % Set the IPOPT options -These might have to change
 option.ipopt.print_level           = 3;
@@ -60,7 +60,7 @@ option.ipopt.hessian_approximation = 'limited-memory';
 option.ipopt.mu_strategy           = 'adaptive';
 option.ipopt.tol                   = 1e-7;
 % Set up the auxiliary data.
-options.auxdata = auxdata;
+option.auxdata = auxdata;
   
 [U_star, info] = ipopt_auxdata(z,funcs,option);
 [time_v, v] = system_solve(U_star, auxdata);
