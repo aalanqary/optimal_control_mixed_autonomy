@@ -39,10 +39,12 @@ function [constraints] = const(U, auxdata)
         % First constraint (eq): v(T) = 0  
         constraints(1) = v(end);
         % Second constraint (ineq): u(t) <= g + k3 * v(t)
+        % g + k3 * v(t) - u(t) >= 0
         pi_1 = p_1(U, v, auxdata);
-        constraints(2) = - auxdata.gamma - trapz(auxdata.tau, pi_1);
+        constraints(2) = trapz(auxdata.tau, pi_1);
         % Third constraint (ineq): u(t) >= -g - k3 * v(t)
+        % u(t) + g + k3 * v(t) >= 0
         pi_2 = p_2(U, v, auxdata);
-        constraints(3) = - auxdata.gamma - trapz(auxdata.tau, pi_2);
+        constraints(3) = trapz(auxdata.tau, pi_2);
     end 
 end

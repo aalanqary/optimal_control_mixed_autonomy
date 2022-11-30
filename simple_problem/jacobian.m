@@ -2,7 +2,7 @@ function jac = jacobian(U, auxdata)
     [time_v, v] = system_solve(U, auxdata);
     v = griddedInterpolant(time_v, v, "linear");
     U = griddedInterpolant(auxdata.tau(1:end-1), U(1:end-1), "linear");
-
+    
     %For first constraint: 
     lambdaT_1 = 1;
     Lambda_1 = ode5(@(t,lambda) lambda *(auxdata.k1 + 2*auxdata.k2*v(t)), flip(time_v), lambdaT_1); 
@@ -12,7 +12,7 @@ function jac = jacobian(U, auxdata)
         df1 = df1';
     end 
     df1 = [df1, 0];
-    
+
     %For second constraint: 
     lambdaT_2 = 0;
     Lambda_2 = ode5(@(t,lambda) f_adj_2(U(t), v(t), lambda, auxdata), flip(time_v), lambdaT_2); 
@@ -35,6 +35,7 @@ function jac = jacobian(U, auxdata)
     
     % should I just concatenate like this
     jac = sparse([df1; df2; df3]);
+    display(U)
 end
 
 function f = f_adj_2(u, v, lambda, auxdata)

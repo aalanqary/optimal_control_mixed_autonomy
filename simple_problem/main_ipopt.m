@@ -13,8 +13,8 @@ auxdata.h = auxdata.T/auxdata.N;
 auxdata.tau = linspace(0, auxdata.T, auxdata.N);
 
 % Specify constraints params
-auxdata.eps = 0;
-auxdata.gamma = 0;
+auxdata.eps = 0.5;
+auxdata.gamma = 100;
 
 % Initial guess
 z = auxdata.k0 * ones(1, auxdata.N); %column vector
@@ -26,8 +26,7 @@ funcs.constraints = @const;
 % MxN matrix and needs to be sparse
 % is this only finding the gradient with respect to U
 funcs.jacobian = @jacobian;
-% 10x10 matrix need to change this so that the 7 columns are zeros
-%figure out how to set m and n
+% contains 1s at values which Jacobian can have nonzero entries
 funcs.jacobianstructure = @jacobianstructure;
 
 % don't need these - bounds for the variables
@@ -35,8 +34,8 @@ option.lb = -Inf*ones(size(z)) ; % Lower bound on the variables.
 option.ub = Inf*ones(size(z)) ; % Upper bound on the variables.
 
 % The constraint functions are bounded to zero = 0;
-option.cl =  [0, -inf, -inf];
-option.cu = [0, 0, 0];
+option.cl =  [0, -auxdata.gamma, -auxdata.gamma];
+option.cu = [0, inf, inf];
 
 % Set the IPOPT options -These might have to change
 option.ipopt.print_level           = 3;
