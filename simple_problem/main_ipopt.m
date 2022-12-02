@@ -13,8 +13,8 @@ auxdata.h = auxdata.T/auxdata.N;
 auxdata.tau = linspace(0, auxdata.T, auxdata.N);
 
 % Specify constraints params
-auxdata.eps = 0;
-auxdata.gamma = 0;
+auxdata.eps = 0.2;
+auxdata.gamma = 0.2;
 
 % Initial guess
 z = auxdata.k0 * ones(1, auxdata.N); %column vector
@@ -30,8 +30,8 @@ funcs.jacobian = @jacobian;
 funcs.jacobianstructure = @jacobianstructure;
 
 % don't need these - bounds for the variables
-option.lb = -Inf*ones(size(z)) ; % Lower bound on the variables.
-option.ub = Inf*ones(size(z)) ; % Upper bound on the variables.
+option.lb = -50*ones(size(z)) ; % Lower bound on the variables.
+option.ub = 50*ones(size(z)) ; % Upper bound on the variables.
 
 % The constraint functions are bounded to zero = 0;
 option.cl =  [0, -auxdata.gamma, -auxdata.gamma];
