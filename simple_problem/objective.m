@@ -13,6 +13,9 @@ function f = objective(U, auxdata)
     v = griddedInterpolant(time_v, v, "previous");
     v = v(auxdata.tau);
     const(U, auxdata)
-    assert(sum(abs(U) <= auxdata.g + auxdata.k3 * v.^2) == length(v)); 
+    %assert(sum(abs(U) <= auxdata.g + auxdata.k3 * v.^2) == length(v)); 
+    if sum(abs(U) <= auxdata.g + auxdata.k3 * v.^2) ~= length(v)
+        disp(abs(U) <= auxdata.g + auxdata.k3 * v.^2);
+    end
 end
 

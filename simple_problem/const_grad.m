@@ -39,6 +39,7 @@ function [dc, dceq] = const_grad(U, auxdata)
 
 end
 
+% with respect to v
 function f = f_adj_2(u, v, lambda, auxdata)
     h = auxdata.g + auxdata.k3*v^2 - u; 
     if h < -auxdata.eps
@@ -63,6 +64,8 @@ function f = f_adj_3(u, v, lambda, auxdata)
     f = f + lambda * (auxdata.k1 + 2*auxdata.k2 * v);
 end 
 
+
+% with respect to u
 function f = f_int_2(u, v, lambda, auxdata)
     h = auxdata.g + auxdata.k3*v.^2 - u; 
     bound_h = (-auxdata.eps <= h) + (auxdata.eps >= h);
