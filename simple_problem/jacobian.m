@@ -35,7 +35,8 @@ function jac = jacobian(U, auxdata)
     
     % should I just concatenate like this
     jac = sparse([df1; df2; df3]);
-    display(U)
+    
+    %display(U)
 end
 
 % with respect to v
