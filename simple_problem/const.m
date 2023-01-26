@@ -39,10 +39,10 @@ function [c, ceq] = const(U, auxdata)
         % First constraint (eq): v(T) = 0  
         ceq(1) = v(end); 
         % Second constraint (ineq): u(t) <= g + k3 * v(t)
-        pi_1 = p_1(U, v, auxdata)
+        pi_1 = p_1(U, v, auxdata);
         c(1) = - auxdata.gamma - trapz(auxdata.tau, pi_1);
         % Third constraint (ineq): u(t) >= -g - k3 * v(t)
-        pi_2 = p_2(U, v, auxdata)
+        pi_2 = p_2(U, v, auxdata);
         c(2) = - auxdata.gamma - trapz(auxdata.tau, pi_2);
     end 
 
