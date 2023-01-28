@@ -8,17 +8,21 @@ auxdata.k3  = auxdata.g*2e-4;
 
 % Specify problem size 
 auxdata.N = 10; % timesteps
-auxdata.N_state = 100; 
+auxdata.N_state = 100; % state is solving for the velocity 100 times in each of the steps for each of the time changes for the u values
 auxdata.h = auxdata.T/auxdata.N;
 auxdata.tau = linspace(0, auxdata.T, auxdata.N); % an array that splits time into spots for the control
 
 % Specify constraints params
 auxdata.eps = 0.1;
-auxdata.gamma = 0.05;
 
-% Initial guess
+auxdata.gamma = 0.1;
+
+% Initial guess - could even try starting with a one really close to the
+% actual u value then keep on moving from the actual solution just
+% construct a function that if less than time cutoff then high value and
+% more than time then the low value
 z = auxdata.k0 * ones(1, auxdata.N); %column vector
-
+opt = optimal(1, -1, 5, 10);
 % Specify functions callbakcs
 funcs.objective = @objective;
 funcs.gradient = @obj_grad;
@@ -49,7 +53,50 @@ option.ipopt.mu_strategy           = 'adaptive'; % update strategy for barrier p
 
 % Set up the auxiliary data.
 option.auxdata = auxdata;
-  
-[U_star, info] = ipopt_auxdata(z,funcs,option);
-[time_v, v] = system_solve(U_star, auxdata);
 
+% Specify problem params
+aux.T = 1;
+aux.g = 9.81;
+aux.k0 = aux.g*0.02;
+aux.k1 = aux.g*1e-5;  
+aux.k2 = aux.g*1e-4;
+aux.k3  = aux.g*2e-4;
+
+% Specify problem size 
+aux.N = 10;
+aux.N_state = 100; 
+aux.h = aux.T/aux.N;
+aux.tau = linspace(0, aux.T, aux.N);
+% Specify constraints params
+aux.eps = 0.5;
+aux.gamma = 0.5;
+nonlcon = @(U) constraint_gradient(U, aux);
+options = optimoptions('fmincon','Display','iter-detailed', ...
+                        'SpecifyObjectiveGradient', true ,...
+                        'SpecifyConstraintGradient', false, ...
+                        'FunValCheck','on', 'DerivativeCheck', 'off',...
+                        'maxfunevals',1e6, 'StepTolerance',1e-12, ...
+                        'algorithm', 'interior-point');
+
+fun = @(U) objective_gradient(U, aux);
+A = [];
+b = [];
+% [A, b] = lc(params, scenario); 
+Aeq = []; beq = []; 
+[U_star,~,~,~,~,grad,~] = fmincon(fun, opt, [], [], [], [], [],[],nonlcon,options);
+[time_v, v] = system_solve(U_star, aux);
+%[U_star, info] = ipopt_auxdata(opt,funcs,option); % just change this to fmincon and add in their parameters
+%[time_v, v] = system_solve(U_star, auxdata);
+
+function [f, df] = objective_gradient(U, aux)
+    f = objective(U, aux); 
+    df = obj_grad(U, aux);
+end 
+
+function [c, ceq, dc, dceq] = constraint_gradient(U, auxdata)
+    [c, ceq] = constfmincon(U, auxdata); 
+    if nargout > 2 
+        [dc, dceq] = const_grad(U, auxdata);
+    end 
+    
+end 
