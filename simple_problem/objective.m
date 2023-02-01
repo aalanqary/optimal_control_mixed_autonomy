@@ -3,10 +3,10 @@ function f = objective(U, auxdata)
     
     figure(1)
     plot(time_v, v)
-    drawnow
+    drawnow 
     figure(2)
      plot(auxdata.tau, U)
-     plot(U)
+     plot(U) 
      drawnow
      pause(3)
     f = -trapz(time_v, v);

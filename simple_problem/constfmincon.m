@@ -2,6 +2,7 @@ function [c, ceq] = constfmincon(U, auxdata)
     % c(x, u) <= 0 
     % ceq(x, u) = 0
     c = [];
+    ceq = [];
     [time_v, v] = system_solve(U, auxdata); 
     v = griddedInterpolant(time_v, v, "previous");
     v = v(auxdata.tau);
@@ -37,14 +38,14 @@ function [c, ceq] = constfmincon(U, auxdata)
     % Using Traditional Approach
     if true
         % First constraint (eq): v(T) = 0  
-        c(1) = v(end);
+        ceq(1) = v(end);
         % Second constraint (ineq): u(t) <= g + k3 * v(t)
         % g + k3 * v(t) - u(t) >= 0
         pi_1 = p_1(U, v, auxdata);
-        ceq(2) = trapz(auxdata.tau, pi_1);
+        c(1) = -trapz(auxdata.tau, pi_1) + auxdata.gamma;
         % Third constraint (ineq): u(t) >= -g - k3 * v(t)
         % u(t) + g + k3 * v(t) >= 0
         pi_2 = p_2(U, v, auxdata);
-        ceq(3) = trapz(auxdata.tau, pi_2);
+        c(2) = - trapz(auxdata.tau, pi_2) + auxdata.gamma;
     end 
 end

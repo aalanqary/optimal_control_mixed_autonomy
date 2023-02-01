@@ -12,7 +12,8 @@ function [dc, dceq] = const_grad(U, auxdata)
     if isrow(df1)
         df1 = df1';
     end 
-    dceq = [df1; 0];
+    dc = [];
+    dc(1) = [df1; 0];
     
     %For second constraint: 
     lambdaT_2 = 0;
@@ -34,7 +35,9 @@ function [dc, dceq] = const_grad(U, auxdata)
     end 
     df3 = [df3; 0];
     
-    dc = [df2, df3];
+    dceq(2) = df2;
+    dceq(3) = df3;
+    display(dc);
     
 
 end

@@ -63,27 +63,32 @@ aux.k2 = aux.g*1e-4;
 aux.k3  = aux.g*2e-4;
 
 % Specify problem size 
-aux.N = 10;
+aux.N = 10; 
 aux.N_state = 100; 
 aux.h = aux.T/aux.N;
 aux.tau = linspace(0, aux.T, aux.N);
 % Specify constraints params
-aux.eps = 0.5;
-aux.gamma = 0.5;
-nonlcon = @(U) constraint_gradient(U, aux);
+aux.eps = 0.1;
+aux.gamma = 0.1;
+nonlcon = @(U) constraint_gradient(U, aux); 
 options = optimoptions('fmincon','Display','iter-detailed', ...
                         'SpecifyObjectiveGradient', true ,...
                         'SpecifyConstraintGradient', false, ...
                         'FunValCheck','on', 'DerivativeCheck', 'off',...
                         'maxfunevals',1e6, 'StepTolerance',1e-12, ...
-                        'algorithm', 'interior-point');
+                        'algorithm', 'sqp',...
+                        'MaxFunctionEvaluations',150);
 
 fun = @(U) objective_gradient(U, aux);
 A = [];
 b = [];
+Amin = -50*ones(10);
+Amax = 50*ones(10);
 % [A, b] = lc(params, scenario); 
 Aeq = []; beq = []; 
-[U_star,~,~,~,~,grad,~] = fmincon(fun, opt, [], [], [], [], [],[],nonlcon,options);
+ % set iterations to 10 and then try to see if the first constrant equal
+ % traditional
+[U_star,~,~,~,~,grad,~] = fmincon(fun, z, [], [], [], [], Amin,Amax,nonlcon,options);
 [time_v, v] = system_solve(U_star, aux);
 %[U_star, info] = ipopt_auxdata(opt,funcs,option); % just change this to fmincon and add in their parameters
 %[time_v, v] = system_solve(U_star, auxdata);
@@ -94,7 +99,7 @@ function [f, df] = objective_gradient(U, aux)
 end 
 
 function [c, ceq, dc, dceq] = constraint_gradient(U, auxdata)
-    [c, ceq] = constfmincon(U, auxdata); 
+    [c, ceq] = constfmincon(U, auxdata);
     if nargout > 2 
         [dc, dceq] = const_grad(U, auxdata);
     end 
