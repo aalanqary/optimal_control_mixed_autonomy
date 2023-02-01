@@ -32,7 +32,7 @@ end
 function f = dp2_dv(u, v, auxdata)
     h = auxdata.g + auxdata.k3*v^2 + u; 
     if h < -auxdata.eps
-        f = 2*auxdata.k3*v(t);
+        f = 2*auxdata.k3*v;
     elseif (h >= -auxdata.eps) && (h<= auxdata.eps)
         f = (-1/4*auxdata.eps) * (4*auxdata.k3^2 * v^3 + 4*auxdata.k3*v*(auxdata.g + u - auxdata.eps));
     else
@@ -41,6 +41,7 @@ function f = dp2_dv(u, v, auxdata)
 end 
 
 function h = helper(u, v, lambda, auxdata)
+    
     h = 1 + lambda*(auxdata.k1 + 2*auxdata.k2*v) + auxdata.gamma*(dp1_dv(u, v, auxdata) + dp2_dv(u, v, auxdata));
 end
 

@@ -17,6 +17,7 @@ auxdata.gamma = 0;
 
 z = auxdata.k0 * ones(1, auxdata.N); %column vector
 %z = sin(auxdata.tau); Not required?
+
 %% Run Optimizaer 
 options = optimoptions('fmincon','Display','iter-detailed', ...
                         'SpecifyObjectiveGradient', true ,...
@@ -41,10 +42,10 @@ function [f, df] = objective_penalty_gradient(U, auxdata)
     df = obj_grad_penalty(U, auxdata);
 end 
 
-function [c, ceq, dc, dceq] = constraint_gradient(U, auxdata)
+function [c, ceq] = constraint_gradient(U, auxdata)
     [c, ceq] = const_eq(U, auxdata); 
-    if nargout > 2 
-        [dc, dceq] = const_eq_grad(U, auxdata);
-    end 
+%     if nargout > 
+%         [dc, dceq] = const_eq_grad(U, auxdata);
+%     end 
     
 end 
