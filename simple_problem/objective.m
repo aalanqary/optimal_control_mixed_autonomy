@@ -1,14 +1,14 @@
 function f = objective(U, auxdata)  
     [time_v, v] = system_solve(U, auxdata);
     
-    figure(1)
-    plot(time_v, v)
-    drawnow 
-    figure(2)
-     plot(auxdata.tau, U)
-     plot(U) 
-     drawnow
-     pause(3)
+    %figure(1)
+    %plot(time_v, v)
+    %drawnow 
+    %figure(2)
+     %plot(auxdata.tau, U)
+     %plot(U) 
+     %drawnow
+     %pause(0)
     f = -trapz(time_v, v);
     v = griddedInterpolant(time_v, v, "previous");
     v = v(auxdata.tau);

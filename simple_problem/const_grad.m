@@ -12,8 +12,8 @@ function [dc, dceq] = const_grad(U, auxdata)
     if isrow(df1)
         df1 = df1';
     end 
-    dc = [];
-    dc(1) = [df1; 0];
+    %dc(:, 1) = [df1; 0]';
+    dceq(:, 1) = [df1; 0]';
     
     %For second constraint: 
     lambdaT_2 = 0;
@@ -23,21 +23,20 @@ function [dc, dceq] = const_grad(U, auxdata)
     if isrow(df2)
         df2 = df2';
     end 
-    df2 = [df2; 0];
+    dc(:, 1) = [df2; 0]';
 
     %For third constraint: 
-    lambdaT_2 = 0;
-    Lambda_3 = ode5(@(t,lambda) f_adj_3(U(t), v(t), lambda, auxdata), flip(time_v), lambdaT_2); 
+    lambdaT_3 = 0;
+    Lambda_3 = ode5(@(t,lambda) f_adj_3(U(t), v(t), lambda, auxdata), flip(time_v), lambdaT_3); 
     Lambda_3 = griddedInterpolant(time_v, Lambda_3, "linear");
     df3 = arrayfun(@(a,b) integral(@(t) -f_int_3(U(t), v(t), Lambda_3(t), auxdata), a, b), auxdata.tau(1:end-1), auxdata.tau(2:end));  
     if isrow(df3)
         df3 = df3';
     end 
-    df3 = [df3; 0];
+    dc(:, 2) = [df3; 0]';
     
-    dceq(2) = df2;
-    dceq(3) = df3;
-    display(dc);
+    dceq(:, 1) = [df1; 0]';
+    %dceq(3) = df3;
     
 
 end
@@ -58,7 +57,7 @@ end
 function f = f_adj_3(u, v, lambda, auxdata)
     h = auxdata.g + auxdata.k3*v^2 + u; 
     if h < -auxdata.eps
-        f = 2*auxdata.k3*v(t);
+        f = 2*auxdata.k3*v;
     elseif (h >= -auxdata.eps) && (h<= auxdata.eps)
         f = (-1/4*auxdata.eps) * (4*auxdata.k3^2 * v^3 + 4*auxdata.k3*v*(auxdata.g + u - auxdata.eps));
     else

@@ -45,6 +45,6 @@ function [c, ceq, dc, dceq] = constraint_gradient(U, auxdata)
     [c, ceq] = constfmincon(U, auxdata); 
     if nargout > 2 
         [dc, dceq] = const_grad(U, auxdata);
-    end 
+    end
     
 end 

@@ -39,13 +39,15 @@ function [c, ceq] = constfmincon(U, auxdata)
     if true
         % First constraint (eq): v(T) = 0  
         ceq(1) = v(end);
-        % Second constraint (ineq): u(t) <= g + k3 * v(t)
-        % g + k3 * v(t) - u(t) >= 0
+        % Second constraint (ineq): u(t) <= g + k3 * v(t)^2
+        % g + k3 * v(t)^2 - u(t) >= aux.gama
+        % c(x, u) <= 0  so 0 >= - (g + k3 * v(t)^2 - u(t)) + aux.gamma
         pi_1 = p_1(U, v, auxdata);
-        c(1) = -trapz(auxdata.tau, pi_1) + auxdata.gamma;
-        % Third constraint (ineq): u(t) >= -g - k3 * v(t)
-        % u(t) + g + k3 * v(t) >= 0
+        c(1) = -trapz(auxdata.tau, pi_1) - auxdata.gamma;
+        % Third constraint (ineq): u(t) >= -g - k3 * v(t)^2
+        % u(t) + g + k3 * v(t)^2 >= aux.gama
+        % c(x, u) <= 0 so 0 >= -(u(t) + g + k3 * v(t)^2) + aux.gamma
         pi_2 = p_2(U, v, auxdata);
-        c(2) = - trapz(auxdata.tau, pi_2) + auxdata.gamma;
+        c(2) = -trapz(auxdata.tau, pi_2) - auxdata.gamma;
     end 
 end

@@ -59,25 +59,25 @@ aux.T = 1;
 aux.g = 9.81;
 aux.k0 = aux.g*0.02;
 aux.k1 = aux.g*1e-5;  
-aux.k2 = aux.g*1e-4;
+aux.k2 = aux.g*1e-4; 
 aux.k3  = aux.g*2e-4;
 
 % Specify problem size 
-aux.N = 10; 
+aux.N = 10;  
 aux.N_state = 100; 
 aux.h = aux.T/aux.N;
 aux.tau = linspace(0, aux.T, aux.N);
 % Specify constraints params
-aux.eps = 0.1;
-aux.gamma = 0.1;
+aux.eps = 0.01;
+aux.gamma = 0.01;
 nonlcon = @(U) constraint_gradient(U, aux); 
 options = optimoptions('fmincon','Display','iter-detailed', ...
                         'SpecifyObjectiveGradient', true ,...
-                        'SpecifyConstraintGradient', false, ...
+                        'SpecifyConstraintGradient', true, ...
                         'FunValCheck','on', 'DerivativeCheck', 'off',...
                         'maxfunevals',1e6, 'StepTolerance',1e-12, ...
                         'algorithm', 'sqp',...
-                        'MaxFunctionEvaluations',150);
+                        'MaxFunctionEvaluations',2000);
 
 fun = @(U) objective_gradient(U, aux);
 A = [];
@@ -92,8 +92,13 @@ Aeq = []; beq = [];
 [time_v, v] = system_solve(U_star, aux);
 %[U_star, info] = ipopt_auxdata(opt,funcs,option); % just change this to fmincon and add in their parameters
 %[time_v, v] = system_solve(U_star, auxdata);
-
-function [f, df] = objective_gradient(U, aux)
+display(U_star)
+figure(1)
+plot(auxdata.tau, U_star)
+plot(U_star) 
+drawnow
+pause(10)
+function [f, df] = objective_gradient(U, aux) 
     f = objective(U, aux); 
     df = obj_grad(U, aux);
 end 
