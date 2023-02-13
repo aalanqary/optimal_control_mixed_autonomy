@@ -40,10 +40,14 @@ function [c, ceq] = const(U, auxdata)
         ceq(1) = v(end); 
         % Second constraint (ineq): u(t) <= g + k3 * v(t)
         pi_1 = p_1(U, v, auxdata);
-        c(1) = - auxdata.gamma - trapz(auxdata.tau, pi_1);
+        %c(1) = - auxdata.gamma - trapz(auxdata.tau, pi_1);
+
+        c(1) = - auxdata.gamma_const - trapz(auxdata.tau, pi_1);
         % Third constraint (ineq): u(t) >= -g - k3 * v(t)
         pi_2 = p_2(U, v, auxdata);
-        c(2) = - auxdata.gamma - trapz(auxdata.tau, pi_2);
+        %c(2) = - auxdata.gamma - trapz(auxdata.tau, pi_2);
+
+        c(2) = - auxdata.gamma_const - trapz(auxdata.tau, pi_2);
     end 
 
 end
