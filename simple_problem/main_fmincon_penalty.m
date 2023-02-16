@@ -12,7 +12,7 @@ auxdata.N_state = 100;
 auxdata.h = auxdata.T/auxdata.N;
 auxdata.tau = linspace(0, auxdata.T, auxdata.N);
 % Specify constraints params
-auxdata.eps = 0;
+auxdata.eps = 0.5;
 auxdata.gamma = 1;
 auxdata.gamma_const = 0.2;
 
@@ -38,11 +38,6 @@ A_max = 100*ones(10);
 Aeq = []; beq = []; 
 [U_star,~,~,~,~,grad,~] = fmincon(fun, z, [], [], [], [], A_min,A_max,nonlcon,options);
 [time_v, v] = system_solve(U_star, auxdata);
-
-% Example U violation test
-U = [9.9455, 8.9526, 10.5842, 5.6858, 0.4102, -4.8671, -9.2073, -9.8769, -9.5680, 0.1962];
-const(U, auxdata)
-
 
 function [f, df] = objective_penalty_gradient(U, auxdata)
     f = objective_penalty(U, auxdata); 

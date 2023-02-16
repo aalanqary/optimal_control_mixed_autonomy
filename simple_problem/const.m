@@ -1,4 +1,4 @@
-function [c, ceq] = const(U, auxdata)  
+function [h1, h2] = const(U, auxdata)  
     % c(x, u) <= 0 
     % ceq(x, u) = 0
     c = [];
@@ -12,6 +12,10 @@ function [c, ceq] = const(U, auxdata)
     if isrow(U)
         U = U'; 
     end 
+
+    % For constraint penalty testing
+    h1 = auxdata.g + auxdata.k3*v.^2 - U;
+    h2 = auxdata.g + auxdata.k3*v.^2 + U;
     
     if false
         % First constraint (eq): v(T) = 0  
@@ -35,7 +39,7 @@ function [c, ceq] = const(U, auxdata)
     end 
 
     % Using Traditional Approach
-    if true
+    if false
         % First constraint (eq): v(T) = 0  
         ceq(1) = v(end); 
         % Second constraint (ineq): u(t) <= g + k3 * v(t)
