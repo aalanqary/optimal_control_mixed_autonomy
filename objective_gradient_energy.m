@@ -1,8 +1,7 @@
 function [z, dz] = objective_gradient(U_vec, params, scenario)
     
     % Objective 
-    Fu = griddedInterpolant(scenario("time"),U_vec);
-    U = @(t) Fu(t);
+
     [X, V, A] = system_solve(U, params, scenario);
     z = J(X, V, A, scenario, params);
     

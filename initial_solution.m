@@ -1,6 +1,5 @@
-function [X0, V0, U0] = initial_solution(scenario, params)
-      if params("initalize") == "IDM"
-          original_I_a = scenario("Ia");
+function [X0, V0, U0] = initial_solution(auxdata)
+          original_Ia = auxdata.Ia;
           scenario("config") = zeros(1, length(scenario("config")));
           scenario("Ia") = find(scenario("config"));
           scenario("Ih") = find(scenario("config") - 1);

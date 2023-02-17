@@ -1,5 +1,8 @@
-function a = ACC(xl, xf, vl, vf, params)
-    V = @(head_way) params("v_max") * ((tanh(head_way - params("safe_dist")) + tanh(params("l") + params("safe_dist")))./(1 + tanh(params("l") + params("safe_dist"))));
-    head_way = xl - xf - params("l");
-    a = params("alpha") *(V(head_way) - vf) + params("beta") * (vl - vf) ./ (head_way.^2);
+function a = ACC(xl, xf, vl, vf, auxdata)
+    head_way = xl - xf - auxdata.l;
+    V = auxdata.v_max .* ((tanh(head_way - auxdata.safe_dist) + ...
+                    tanh(auxdata.l + auxdata.safe_dist))./ ...
+                    (1 + tanh(auxdata.l + auxdata.safe_dist)));
+    a = auxdata.alpha *(V - vf) + ...
+        auxdata.beta * (vl - vf) ./ (head_way.^2);
 end 

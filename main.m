@@ -1,9 +1,27 @@
 %% Define problem 
 platoon = [1, 0, 1, 0];
-data_dir = 'data_v2_preprocessed_west';
-data_file = dir(sprintf('%s/*7050.csv', data_dir));
+% data_dir = 'data_v2_preprocessed_west';
+% data_file = dir(sprintf('%s/*7050.csv', data_dir));
 
-scenario = prepare_data(data_dir, data_file.name, 2, platoon, 1000);
+scenario = prepare_data(2, platoon, 1000);
+auxdata.time = 0:0.1:500;
+auxdata.vl = vl_fun;
+
+
+x0 = x0_rule * vl_fun(time(1)) * flip(0:1:len_platoon)'; 
+    v0 = ones(len_platoon, 1) * vl_fun(time(1)); 
+    
+    opts = odeset('RelTol',1e-10,'AbsTol',1e-12);
+    [~, xl] = ode45(@(t,x) vl_fun(t), time, x0(1), opts);
+    Fx = griddedInterpolant(time, xl);
+    xl_fun = @(t) Fx(t);  
+    
+    scenario("time") = time;
+    scenario("x0") = x0(2:end);
+    scenario("v0") = v0;
+    scenario("vl") = vl_fun;
+    scenario("xl") = xl_fun;
+
 
 %specify parameters
 params = containers.Map;

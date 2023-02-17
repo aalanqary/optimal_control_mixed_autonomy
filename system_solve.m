@@ -1,23 +1,20 @@
-function [X, V, A] = system_solve(U, params, scenario)
-
-    [~, XV] = ode15s(@(t,XV) F(t, XV, U(t)', scenario, params), scenario("time"), [scenario("x0"); scenario("v0")], params("ode_opt"));
-    V = XV(:, end - length(scenario("config")) + 1: end);
-    X = XV(:, 1:end - length(scenario("config")));
+function [X, V, A] = system_solve(U_vec, auxdata)
+    
+    U = griddedInterpolant(auxdata.utime, U_vec, "previous");
+    XV = ode5(@(t,XV) F(t, XV, U(t)', auxdata), ...
+                     auxdata.time, [auxdata.x0; auxdata.v0]);
+    V = XV(:, end - auxdata.len_platoon + 1: end);
+    X = XV(:, 1:end - auxdata.len_platoon);
     
     if nargout > 2
         A = zeros(size(X));
-        xl = scenario("xl");
-        xl = xl(scenario("time"));
-        vl = scenario("vl");
-        vl = vl(scenario("time"));
-        Xl = [xl, X]; 
-        Vl = [vl, V]; 
-        Ah = ACC(Xl(:, scenario("Ih")), X(:, scenario("Ih")), ... 
-                      Vl(:, scenario("Ih")), V(:, scenario("Ih")), params); 
-        A(:, scenario("Ih")) = Ah;
-        A(:, scenario("Ia")) = U(scenario("time")); 
+        Xl = [auxdata.xl(auxdata.time), X]; 
+        Vl = [auxdata.vl(auxdata.time), V];  
+        Ah = ACC(Xl(:, auxdata.Ih), X(:, auxdata.Ih), ... 
+                 Vl(:, auxdata.Ih), V(:, auxdata.Ih), auxdata); 
+        A(:, auxdata.Ih) = Ah;
+        A(:, auxdata.Ia) = U(auxdata.time); 
     end 
-    
 %     Linear solver
 %     x_0 = scenario("x_0");
 %     x_0 = x_0(1); 
@@ -31,22 +28,16 @@ function [X, V, A] = system_solve(U, params, scenario)
 
 end 
 
-function XV_dot = F(t, XV, U, scenario, params) 
-    X = XV(1:length(scenario("config")));
-    V = XV(length(scenario("config")) + 1: end);
-    
-    xl = scenario("xl");
-    xl = xl(t);
-    vl = scenario("vl");
-    vl = vl(t);
-    Xl = [xl; X]; 
-    Vl = [vl; V]; 
-    a = ACC(Xl(scenario("Ih")), X(scenario("Ih")), ... 
-                                 Vl(scenario("Ih")), V(scenario("Ih")), ...
-                                 params);
+function XV_dot = F(t, XV, U, auxdata) 
+    X = XV(1:auxdata.len_platoon);
+    V = XV(auxdata.len_platoon+1:end);
+    Xl = [auxdata.xl(t); X]; 
+    Vl = [auxdata.vl(t); V]; 
+    a = ACC(Xl(auxdata.Ih), X(auxdata.Ih), ...
+            Vl(auxdata.Ih), V(auxdata.Ih), auxdata);
     X_dot = V;
     V_dot = zeros(length(V), 1);
-    V_dot(scenario("Ih")) = a;
-    V_dot(scenario("Ia")) = U; 
+    V_dot(auxdata.Ih) = a;
+    V_dot(auxdata.Ia) = U; 
     XV_dot = [X_dot; V_dot];
 end 
