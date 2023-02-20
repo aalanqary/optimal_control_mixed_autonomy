@@ -13,9 +13,9 @@ auxdata.h = auxdata.T/auxdata.N;
 auxdata.tau = linspace(0, auxdata.T, auxdata.N); % an array that splits time into spots for the control
 
 % Specify constraints params
-auxdata.eps = 0.1;
+auxdata.eps = 0.01;
 
-auxdata.gamma = 0.1;
+auxdata.gamma = 0.001;
 
 % Initial guess - could even try starting with a one really close to the
 % actual u value then keep on moving from the actual solution just
@@ -38,12 +38,12 @@ option.lb = -50*ones(size(z)) ; % Lower bound on the variables.
 option.ub = 50*ones(size(z)) ; % Upper bound on the variables.
 
 % The constraint functions are bounded to zero = 0;
-option.cl =  [0, -auxdata.gamma, -auxdata.gamma];
+option.cl =  [0, 0, 0];
 option.cu = [0, inf, inf];
 
 % Set the IPOPT options -These might have to change
 option.ipopt.tol                   = 1e-1;
-option.ipopt.max_iter             = 5;
+option.ipopt.max_iter             = 500;
 option.ipopt.print_level           = 5;
 %option.ipopt.jac_c_constant        = 'yes'; % indicates whether all
 %equality constraints are linear also jac_d_constant for inequality
@@ -69,7 +69,7 @@ aux.h = aux.T/aux.N;
 aux.tau = linspace(0, aux.T, aux.N);
 % Specify constraints params
 aux.eps = 0.01;
-aux.gamma = 0.01;
+aux.gamma = 0.005;
 nonlcon = @(U) constraint_gradient(U, aux); 
 options = optimoptions('fmincon','Display','iter-detailed', ...
                         'SpecifyObjectiveGradient', true ,...
@@ -88,10 +88,10 @@ Amax = 50*ones(10);
 Aeq = []; beq = []; 
  % set iterations to 10 and then try to see if the first constrant equal
  % traditional
-[U_star,~,~,~,~,grad,~] = fmincon(fun, z, [], [], [], [], Amin,Amax,nonlcon,options);
-[time_v, v] = system_solve(U_star, aux);
-%[U_star, info] = ipopt_auxdata(opt,funcs,option); % just change this to fmincon and add in their parameters
-%[time_v, v] = system_solve(U_star, auxdata);
+%[U_star,~,~,~,~,grad,~] = fmincon(fun, z, [], [], [], [], Amin,Amax,nonlcon,options);
+%[time_v, v] = system_solve(U_star, aux);
+[U_star, info] = ipopt_auxdata(opt,funcs,option); % just change this to fmincon and add in their parameters
+[time_v, v] = system_solve(U_star, auxdata);
 display(U_star)
 figure(1)
 plot(auxdata.tau, U_star)

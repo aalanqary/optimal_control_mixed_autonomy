@@ -35,7 +35,8 @@ function jac = jacobian(U, auxdata)
     
     % should I just concatenate like this
     % for flipping do jac = sparse([-df1; -df2; -df3]);
-    jac = sparse([df1; df2; df3]);
+    jac = sparse([df1; -df2; -df3]);
+    display(jac)
     
     %display(U)
 end
@@ -64,6 +65,7 @@ function f = f_adj_3(u, v, lambda, auxdata)
     end
     f = f + lambda * (auxdata.k1 + 2*auxdata.k2 * v);
 end 
+
 
 % with respect to u
 function f = f_int_2(u, v, lambda, auxdata)

@@ -14,7 +14,7 @@ function [c, ceq] = constfmincon(U, auxdata)
         U = U'; 
     end 
     
-    if false
+    if true
         % First constraint (eq): v(T) = 0  
         ceq(1) = v(end); 
         
@@ -36,7 +36,7 @@ function [c, ceq] = constfmincon(U, auxdata)
     end 
 
     % Using Traditional Approach
-    if true
+    if false
         % First constraint (eq): v(T) = 0  
         ceq(1) = v(end);
         % Second constraint (ineq): u(t) <= g + k3 * v(t)^2

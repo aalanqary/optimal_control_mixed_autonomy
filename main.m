@@ -79,3 +79,9 @@ option.ipopt.tol                   = 1e-7;
 %U_star = @(t) Fu(t);
 %[X_star, V_star] = system_solve(U_star, params, scenario);
 
+
+% log barrier function
+b = 0;
+penalty = -log(b-x)*(x<b);
+
+
