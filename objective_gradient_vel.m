@@ -14,27 +14,23 @@ function [z, dz] = objective_gradient_vel(U_vec, auxdata)
         PQ0 = get_adjoint_ic(X, V, U_vec, auxdata);
         PQ = ode5(@(t,PQ) F_adjoint(t, PQ, Fx(t)', Fv(t)', Fu(t)', auxdata), flip(auxdata.time), PQ0);
         PQ = flip(PQ,1);
-        P = PQ(:, 1:auxdata.len_platoon);
         Q = PQ(:, auxdata.len_platoon+1:end);
-%         P_short = griddedInterpolant(auxdata.time, P);
+
         X_short = Fx(auxdata.time);
         V_short = Fv(auxdata.time);
         Q_short = griddedInterpolant(auxdata.time, Q);
         Q_short = Q_short(auxdata.utime);
         
         % Lu - zeta fu
-%         dz = Q_short(:, auxdata.Ia) + L_partial(X_short(:, auxdata.Ia), V_short(:, auxdata.Ia), U_vec, "u", auxdata);
-%         dz = -dz;
-%         figure(2); 
-%         plot(dz)
-
-        dz = Q(:, auxdata.Ia) + L_partial(X(:, auxdata.Ia), V(:, auxdata.Ia), Fu(auxdata.time), "u", auxdata);
-        dz = -dz;
-        figure(2); 
+        dz = Q_short(:, auxdata.Ia) + L_partial(X_short(:, auxdata.Ia), V_short(:, auxdata.Ia), U_vec, "u", auxdata);
+        figure(3); 
         plot(dz)
-        dz = griddedInterpolant(auxdata.time, dz);
-        arrayfun(@(a,b) integral(@(t) dz(t), a, b), auxdata.utime(1:end-1), auxdata.utime(2:end));
-        
+        drawnow
+ 
+%         dz = Q(:, auxdata.Ia) + L_partial(X(:, auxdata.Ia), V(:, auxdata.Ia), Fu(auxdata.time), "u", auxdata);
+%         dz = griddedInterpolant(auxdata.time, dz);
+%         dz = arrayfun(@(a,b) integral(@(t) dz(t), a, b), auxdata.utime(1:end-1), auxdata.utime(2:end));
+%         dz = [dz;0];
     end 
  
 end 
@@ -52,7 +48,6 @@ end
 function PQ_dot = F_adjoint(t, PQ, X, V, U, auxdata)
     P = PQ(1:auxdata.len_platoon); %x multipliers 
     Q = [PQ(auxdata.len_platoon+1:end); 0]; %v multipliers 
-    sum_P = sum(P);
     P_dot = zeros(length(P), 1);
     Q_dot = zeros(length(Q)-1, 1);
     Xl = [auxdata.xl(t); X]; 
@@ -67,7 +62,7 @@ function PQ_dot = F_adjoint(t, PQ, X, V, U, auxdata)
         - Q(auxdata.Ih+1) .* ismember(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
     
     Q_dot(auxdata.Ih) = - L_partial(X, V, U, "vh", auxdata) ...
-        - sum_P * ones(length(auxdata.Ih), 1) ...
+        - P(auxdata.Ih) ...
         - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata)  ...
         - Q(auxdata.Ih+1) .* ismember(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);
     
@@ -75,10 +70,10 @@ function PQ_dot = F_adjoint(t, PQ, X, V, U, auxdata)
     P_dot(auxdata.Ia) = -L_partial(X, V, U, "xa", auxdata) ...
         - Q(auxdata.Ia+1) .* ismember(auxdata.Ia+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
     
-    Q_dot(auxdata.Ia) = L_partial(X, V, U, "va", auxdata) ...
-        - sum_P * ones(length(auxdata.Ia), 1) ...
+    Q_dot(auxdata.Ia) = -L_partial(X, V, U, "va", auxdata) ...
+        - P(auxdata.Ia) ...
         - Q(auxdata.Ia+1) .* ismember(auxdata.Ia+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "vl", auxdata);
-    PQ_dot = [P_dot;Q_dot];
+    PQ_dot = [P_dot; Q_dot];
 end 
 
 %%%%% Partial derivatives of the running cost %%%%%
@@ -89,9 +84,9 @@ function l_partial = L_partial(X, V, U, var, auxdata)
         case "xa"
             l_partial = zeros(size(X(auxdata.Ia)));
         case "vh"
-            l_partial =  (2/length(auxdata.time)) * V(auxdata.Ih);
+            l_partial =  (2) * V(auxdata.Ih);
         case "va"
-            l_partial =  (2/length(auxdata.time)) * V(auxdata.Ia); 
+            l_partial =  (2) * V(auxdata.Ia); 
         case "u" 
            l_partial = zeros(size(U));            
     end 
@@ -116,5 +111,5 @@ end
 function PQ_0 = get_adjoint_ic(X, V, U, auxdata)
     Q_0 = zeros(auxdata.len_platoon, 1);
     P_0 = zeros(auxdata.len_platoon, 1);
-    PQ_0 = [P_0;Q_0];
+    PQ_0 = [P_0; Q_0];
 end 
