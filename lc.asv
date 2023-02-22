@@ -1,11 +1,12 @@
-function [A, b] = lc(auxdata)
-    Tf = auxdata.utime(end);
-    nt = length(auxdata.utime);
-%     x_0 = auxdata.v0(1); 
-%     X_l = auxdata.xl(auxdata.time);
-    v_0 = auxdata.v0(1); 
-    T = (Tf/nt) * ones(nt-1,nt);
-    T = [zeros(1,nt);T];
+function [A, b] = lc(params, scenario)
+    x_0 = scenario("x_0");
+    x_0 = x_0(1); 
+    v_0 = scenario("v_0");
+    v_0 = v_0(1); 
+    X_l = scenario("x_leader");
+    X_l = auxdata.xl(auxdata.time);
+    T = (params("T")/params("nt")) * ones(params("nt")-1,params("nt"));
+    T = [zeros(1,params("nt"));T];
     T = tril(T);
 %     V = v_0 * ones(params("nt"), 1) + T*U;
 %     X = x_0 * ones(params("nt"), 1) + v_0 * params("t_int") + T*T*U;
@@ -14,6 +15,6 @@ function [A, b] = lc(auxdata)
 %         params("gamma") - X_l + x_0 + v_0 * params("t_int") + params("l"); ...
 %         v_0 * ones(params("nt"), 1)];
     A = -T;
-    b = v_0 * ones(length(auxdata.utime), 1);
+    b = v_0 * ones(params("nt"), 1);
 
 end

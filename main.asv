@@ -30,7 +30,7 @@ auxdata.vl = @(t) (t<=120) * 30 ...
 auxdata.vl = auxdata.vl(auxdata.time); 
 auxdata.vl = smoothdata(auxdata.vl,'movmean',200);
 auxdata.vl = griddedInterpolant(auxdata.time, auxdata.vl);
-x0 = 0.27 * auxdata.vl(0) * flip(0:1:auxdata.len_platoon)';
+x0 = 0. * auxdata.vl(0) * flip(0:1:auxdata.len_platoon)';
 auxdata.v0 = ones(auxdata.len_platoon, 1) * auxdata.vl(0); 
 opts = odeset('RelTol',1e-10,'AbsTol',1e-12);
 [~, xl] = ode45(@(t,x) auxdata.vl(t), auxdata.time, x0(1), opts);
