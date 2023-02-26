@@ -41,6 +41,7 @@ function j = J(X, V, A, auxdata)
     Vl = [auxdata.vl(auxdata.time), V]; 
     h = Xl(:, auxdata.Ia) - X(:, auxdata.Ia) - auxdata.l;
     
+    % arctan new barrier function
     running_cost = auxdata.mu1 * sum(A.^2, "all")/length(auxdata.time) ...
         + auxdata.mu2 * sum(auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + sym(pi)/2), "all")/length(auxdata.time); %use smooth function 
     terminal_cost = 0; %-sum(X(end, :));
@@ -109,18 +110,16 @@ function dl = L_partial(t, X, V, U, A, var, auxdata)
             dl_acc = 2 * A(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata) ...
                 + ismember(auxdata.Ih+1, auxdata.Ih)' * 2 .* Af(auxdata.Ih) .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
             
-            dl_penality = ismember(auxdata.Ih+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*hf + auxdata.c).^2 + 1)) .* (((hf < 1) + (hf>= 1e-10)) ==2);
-            % log barrier: dl_penality = ismember(auxdata.Ih+1, auxdata.Ia)' * 2 .* (log(max(min(1, hf), 1e-10))./(max(min(1, hf), 1e-10))) .* (((hf < 1) + (hf>= 1e-10)) ==2); 
-            dl = dl_acc + dl_penality;
+            dl_penalty = ismember(auxdata.Ih+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*hf + auxdata.c).^2 + 1)) .* (((hf < 1) + (hf>= 1e-10)) ==2);
+
+            dl = dl_acc + dl_penalty;
         case "xa"
             dl_acc = 2 * ismember(auxdata.Ia+1, auxdata.Ih)' .* Af(auxdata.Ia) .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
             
-            dl_penality = -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*h + auxdata.c).^2 + 1)) .* -1 * ((h < 1) && (h>= 1e-10)) ...
+            dl_penalty = -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*h + auxdata.c).^2 + 1)) .* -1 * ((h < 1) && (h>= 1e-10)) ...
                 + ismember(auxdata.Ia+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*hf + auxdata.c).^2 + 1)) .* (((hf < 1) + (hf>= 1e-10)) ==2);
-            
-            % log barrier: dl_penality = 2 * (log(max(min(1, h), 1e-10))./(max(min(1, h), 1e-10))) .* -1 * ((h < 1) && (h>= 1e-10)) ...
-            %    + ismember(auxdata.Ia+1, auxdata.Ia)' * 2 .* (log(max(min(1, hf), 1e-10))./(max(min(1, hf), 1e-10))) .* (((hf < 1) + (hf>= 1e-10)) ==2);
-            dl = dl_acc + dl_penality;
+          
+            dl = dl_acc + dl_penalty;
         case "vh"
             dl = 2 * A(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata) ...
                 + 2 * ismember(auxdata.Ih+1, auxdata.Ih)' .* Af(auxdata.Ih) .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);
