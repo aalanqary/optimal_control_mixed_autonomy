@@ -55,6 +55,11 @@ auxdata.d_min = auxdata.safe_dist;
 auxdata.eps = 2;
 auxdata.gamma = 120;
 
+%Arctan Barrier auxdata (a(-arctan(bx+c)+pi/2)
+auxdata.a = 100;
+auxdata.b = 10;
+auxdata.c = 1;
+
 %Initial solution  
 U0 = diff(auxdata.vl(auxdata.utime) - 5);
 U0 = [U0;0];

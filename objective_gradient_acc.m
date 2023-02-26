@@ -41,9 +41,10 @@ function j = J(X, V, A, auxdata)
     Vl = [auxdata.vl(auxdata.time), V]; 
     h = Xl(:, auxdata.Ia) - X(:, auxdata.Ia) - auxdata.l;
     
-    % arctan new barrier function
+    % arctan new barrier function (a(-arctan(bx+c)+pi/2) might have to use
+    % sym(pi)
     running_cost = auxdata.mu1 * sum(A.^2, "all")/length(auxdata.time) ...
-        + auxdata.mu2 * sum(auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + sym(pi)/2), "all")/length(auxdata.time); %use smooth function 
+        + auxdata.mu2 * sum(auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + pi/2), "all")/length(auxdata.time); %use smooth function 
     terminal_cost = 0; %-sum(X(end, :));
     j = running_cost + terminal_cost;
 
