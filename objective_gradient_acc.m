@@ -6,6 +6,7 @@ function [z, dz] = objective_gradient_acc(U_vec, auxdata)
     
     % Gradient
     if nargout >= 2
+        display(size(X))
         Fx = griddedInterpolant(auxdata.time, X);
         Fv = griddedInterpolant(auxdata.time, V);
         Fa = griddedInterpolant(auxdata.time, A);
@@ -111,14 +112,14 @@ function dl = L_partial(t, X, V, U, A, var, auxdata)
             dl_acc = 2 * A(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata) ...
                 + ismember(auxdata.Ih+1, auxdata.Ih)' * 2 .* Af(auxdata.Ih) .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
             
-            dl_penalty = ismember(auxdata.Ih+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*hf + auxdata.c).^2 + 1)) .* (((hf < 1) + (hf>= 1e-10)) ==2);
+            dl_penalty = ismember(auxdata.Ih+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*hf + auxdata.c).^2 + 1));
 
             dl = dl_acc + dl_penalty;
         case "xa"
             dl_acc = 2 * ismember(auxdata.Ia+1, auxdata.Ih)' .* Af(auxdata.Ia) .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
             
-            dl_penalty = -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*h + auxdata.c).^2 + 1)) .* -1 * ((h < 1) && (h>= 1e-10)) ...
-                + ismember(auxdata.Ia+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*hf + auxdata.c).^2 + 1)) .* (((hf < 1) + (hf>= 1e-10)) ==2);
+            dl_penalty = -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*h + auxdata.c).^2 + 1)) .* -1 ...
+                + ismember(auxdata.Ia+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*hf + auxdata.c).^2 + 1));
           
             dl = dl_acc + dl_penalty;
         case "vh"
