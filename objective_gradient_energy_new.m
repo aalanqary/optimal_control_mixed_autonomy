@@ -1,4 +1,4 @@
-function [z, dz] = objective_gradient_acc(U_vec, auxdata)
+function [z, dz] = objective_gradient_energy_new(U_vec, auxdata)
     
     % Objective 
     [X, V, A] = system_solve(U_vec, auxdata);
@@ -15,15 +15,17 @@ function [z, dz] = objective_gradient_acc(U_vec, auxdata)
         PQ = flip(PQ,1);
         Q = PQ(:, auxdata.len_platoon+1:end);
 
-        X_short = Fx(auxdata.time);
-        V_short = Fv(auxdata.time);
+        X_short = Fx(auxdata.utime);
+        V_short = Fv(auxdata.utime);
+        A_short = Fa(auxdata.utime);
         Q_short = griddedInterpolant(auxdata.time, Q);
         Q_short = Q_short(auxdata.utime);
         
         % Lu - zeta fu
-        dz = Q_short(:, auxdata.Ia) + L_partial(0, [], [], U_vec, [],  "u", auxdata);
-        figure(3); 
+        dz = Q_short(:, auxdata.Ia) + L_partial(0, X_short, V_short, U_vec, A_short,  "u", auxdata);
+        figure(4); 
         plot(dz)
+        title("Gradient")
         drawnow
  
 %         dz = Q(:, auxdata.Ia) + L_partial(X(:, auxdata.Ia), V(:, auxdata.Ia), Fu(auxdata.time), "u", auxdata);
@@ -39,21 +41,25 @@ function j = J(X, V, A, auxdata)
     % Compute headways of AVs
     Xl = [auxdata.xl(auxdata.time), X]; 
     Vl = [auxdata.vl(auxdata.time), V]; 
-    h = Xl(:, auxdata.Ia) - X(:, auxdata.Ia) - auxdata.l;
-    
-    running_cost = auxdata.mu1 * sum(A.^2, "all")/length(auxdata.time) ...
-        + auxdata.mu2 * sum(log(max(min(1, h), 1e-10)).^2, "all")/length(auxdata.time);
+    E = simplified_fuel_model(V,A,'RAV4');
+
+    running_cost = auxdata.mu1 * sum(E.^2, "all")/length(auxdata.time);    
     terminal_cost = 0; %-sum(X(end, :));
     j = running_cost + terminal_cost;
 
     figure(1)
     plot(A)
-    title("Objective = ", sum(A.^2, "all")/length(auxdata.time))
+    title("Acceleration, Objective = ", j)
     drawnow;
     
     figure(2)
-    plot(max(min(1, h), 1e-10))
-%     title("Objective = ", sum(log(max(min(1, h), 0)).^2, "all")/length(auxdata.time), "all")
+    plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
+    title("Headway")
+    drawnow;
+
+    figure(3)
+    plot(Vl)
+    title("Velocity")
     drawnow;
 
 end 
@@ -94,38 +100,58 @@ end
 
 %%%%% Partial derivatives of the running cost %%%%%
 function dl = L_partial(t, X, V, U, A, var, auxdata)
+    load(['RAV4_coeffs.mat']);
+    C2 = double(C2); q0 = double(q0);
     if var ~= "u"
         Xl = [auxdata.xl(t); X]; 
         Xf = [X(2:end); 0]; 
         Vl = [auxdata.vl(t); V]; 
         Vf = [V(2:end); 0]; 
         Af = [A(2:end); 0]; 
-    
-        h = Xl(auxdata.Ia) - X(auxdata.Ia) - auxdata.l;
-        hf = [h(2:end); 0];
     end
     switch var
         case "xh" 
-            dl_acc = 2 * A(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata) ...
-                + ismember(auxdata.Ih+1, auxdata.Ih)' * 2 .* Af(auxdata.Ih) .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
+            da = ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata);
+            daf = ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
             
-            dl_penality = ismember(auxdata.Ih+1, auxdata.Ia)' * 2 .* (log(max(min(1, hf), 1e-10))./(max(min(1, hf), 1e-10))) .* (((hf < 1) + (hf>= 1e-10)) ==2);
-            dl = dl_acc + dl_penality;
+            dl = (p0 + p1.* V(auxdata.Ih) + p2 .* V(auxdata.Ih).^2) .* da ...
+                + (A(auxdata.Ih) > 0) .* 2 .* (q0 + q1 .* V(auxdata.Ih)) .* A(auxdata.Ih) .* da;
+            dlf = + ismember(auxdata.Ih+1, auxdata.Ih)' .* ((p0 + p1.* Vf(auxdata.Ih) + p2 .* Vf(auxdata.Ih).^2) .* daf ...
+                + (Af(auxdata.Ih) > 0) .* 2 .* (q0 + q1 * Vf(auxdata.Ih)) .* Af(auxdata.Ih) .* daf); 
+            
+            dl = dl + dlf;
         case "xa"
-            dl_acc = 2 * ismember(auxdata.Ia+1, auxdata.Ih)' .* Af(auxdata.Ia) .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
+            daf = ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
             
-            dl_penality = 2 * (log(max(min(1, h), 1e-10))./(max(min(1, h), 1e-10))) .* -1 * ((h < 1) && (h>= 1e-10)) ...
-                + ismember(auxdata.Ia+1, auxdata.Ia)' * 2 .* (log(max(min(1, hf), 1e-10))./(max(min(1, hf), 1e-10))) .* (((hf < 1) + (hf>= 1e-10)) ==2);
-            dl = dl_acc + dl_penality;
+            dl = 0;
+            dlf = ismember(auxdata.Ia+1, auxdata.Ih)' .* ((p0 + p1.* Vf(auxdata.Ia) + p2 .* Vf(auxdata.Ia).^2) .* daf ...
+                + (Af(auxdata.Ia) > 0) .* 2 .* (q0 + q1 * Vf(auxdata.Ia)) .* Af(auxdata.Ia) .* daf); 
+
+            dl = dl + dlf; 
         case "vh"
-            dl = 2 * A(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata) ...
-                + 2 * ismember(auxdata.Ih+1, auxdata.Ih)' .* Af(auxdata.Ih) .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);
-          
+            da = ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata);
+            daf = ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);
+
+            dl = C1 + 2*C2*V(auxdata.Ih) + 3*C3*V(auxdata.Ih).^2 ...
+                 + (p0 + p1*V(auxdata.Ih) + p2*V(auxdata.Ih).^2) .* da ...
+                 + (p1 + 2*p2*V(auxdata.Ih)) .* A(auxdata.Ih) ...
+                 + (A(auxdata.Ih) > 0) .* (2 * (q0 + q1 * V(auxdata.Ih)) .* A(auxdata.Ih) .* da ...
+                 + q1 * A(auxdata.Ih).^2);
+            dlf = + ismember(auxdata.Ih+1, auxdata.Ih)' .* ((p0 + p1.* Vf(auxdata.Ih) + p2 .* Vf(auxdata.Ih).^2) .* daf ...
+                + (Af(auxdata.Ih) > 0) .* 2 .* (q0 + q1 * Vf(auxdata.Ih)) .* Af(auxdata.Ih) .* daf); 
+
+            dl = dl + dlf;
         case "va"
-            dl = 2 * ismember(auxdata.Ia+1, auxdata.Ih)' .* Af(auxdata.Ia) .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "vl", auxdata);
+            daf = ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "vl", auxdata);
+
+            dl  = C1 + 2*C2*V(auxdata.Ia) + 3*C3*V(auxdata.Ia).^2 ...
+                  + (p1 + 2*p2*V(auxdata.Ia)) .* A(auxdata.Ia);
+            dlf = ismember(auxdata.Ia+1, auxdata.Ih)' .* ((p0 + p1.* Vf(auxdata.Ia) + p2 .* Vf(auxdata.Ia).^2) .* daf ...
+                + (Af(auxdata.Ia) > 0) .* 2 .* (q0 + q1 * Vf(auxdata.Ia)) .* Af(auxdata.Ia) .* daf); 
 
         case "u" 
-           dl = 2*U;         
+           dl = p0 + p1 .* V(:, auxdata.Ia) + p2 .* V(:, auxdata.Ia).^2 ...
+               + (A(:, auxdata.Ia) > 0) .* (2.*q0.*A(auxdata.Ia) + 2.*q1.*V(:, auxdata.Ia).*A(:, auxdata.Ia));
     end 
 end 
 

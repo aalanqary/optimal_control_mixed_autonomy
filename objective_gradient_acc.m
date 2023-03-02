@@ -6,7 +6,6 @@ function [z, dz] = objective_gradient_acc(U_vec, auxdata)
     
     % Gradient
     if nargout >= 2
-        display(size(X))
         Fx = griddedInterpolant(auxdata.time, X);
         Fv = griddedInterpolant(auxdata.time, V);
         Fa = griddedInterpolant(auxdata.time, A);
@@ -16,21 +15,14 @@ function [z, dz] = objective_gradient_acc(U_vec, auxdata)
         PQ = flip(PQ,1);
         Q = PQ(:, auxdata.len_platoon+1:end);
 
-        X_short = Fx(auxdata.time);
-        V_short = Fv(auxdata.time);
         Q_short = griddedInterpolant(auxdata.time, Q);
         Q_short = Q_short(auxdata.utime);
         
         % Lu - zeta fu
         dz = Q_short(:, auxdata.Ia) + L_partial(0, [], [], U_vec, [],  "u", auxdata);
-        figure(3); 
+        figure(4); 
         plot(dz)
         drawnow
- 
-%         dz = Q(:, auxdata.Ia) + L_partial(X(:, auxdata.Ia), V(:, auxdata.Ia), Fu(auxdata.time), "u", auxdata);
-%         dz = griddedInterpolant(auxdata.time, dz);
-%         dz = arrayfun(@(a,b) integral(@(t) dz(t), a, b), auxdata.utime(1:end-1), auxdata.utime(2:end));
-%         dz = [dz;0];
     end 
  
 end 
@@ -45,18 +37,23 @@ function j = J(X, V, A, auxdata)
     % arctan new barrier function (a(-arctan(bx+c)+pi/2) might have to use
     % sym(pi)
     running_cost = auxdata.mu1 * sum(A.^2, "all")/length(auxdata.time) ...
-        + auxdata.mu2 * sum(auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + pi/2), "all")/length(auxdata.time); %use smooth function 
+        + auxdata.mu2 * sum(auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + pi/2), "all")/length(auxdata.time); 
     terminal_cost = 0; %-sum(X(end, :));
     j = running_cost + terminal_cost;
 
     figure(1)
     plot(A)
-    title("Objective = ", sum(A.^2, "all")/length(auxdata.time))
+    title("Acceleration, Objective = ", j)
     drawnow;
     
     figure(2)
-    plot(Xl)
-%     title("Objective = ", sum(log(max(min(1, h), 0)).^2, "all")/length(auxdata.time), "all")
+    plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
+    title("AV Headway")
+    drawnow;
+
+    figure(3)
+    plot(Vl)
+    title("Velocity")
     drawnow;
 
 end 

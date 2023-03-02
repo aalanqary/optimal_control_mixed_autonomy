@@ -1,41 +1,8 @@
 %% Define problem 
-global fun_eval
-fun_eval = 0;
 auxdata.platoon = [1, 0, 0, 0];
 auxdata.len_platoon = length(auxdata.platoon);
 auxdata.Ia = find(auxdata.platoon);
 auxdata.Ih = find(auxdata.platoon - 1);
-% data_dir = 'data_v2_preprocessed_west';
-% data_file = dir(sprintf('%s/*7050.csv', data_dir));
-
-% Leader's trajectory
-% auxdata.utime = (0:1:50)';
-% auxdata.time = (0:0.1:50)';
-% auxdata.vl = @(t) 30 + 0.*t; 
-% x0 = 0.27 * auxdata.vl(0) * flip(0:1:auxdata.len_platoon)'; 
-% auxdata.v0 = ones(auxdata.len_platoon, 1) * auxdata.vl(0); 
-% opts = odeset('RelTol',1e-10,'AbsTol',1e-12);
-% [~, xl] = ode45(@(t,x) auxdata.vl(t), auxdata.time, x0(1), opts);
-% auxdata.x0 = x0(2:end);
-% auxdata.xl = griddedInterpolant(auxdata.time, xl);
-
-% Leader's trajectory
-auxdata.utime = (0:1:800)';
-auxdata.time = (0:0.1:800)';
-auxdata.vl = @(t) (t<=120) * 30 ...
-            + (((t>120) + (t<= 240)) ==2) .* (-t/6 + 50) ...
-            + (((t>240) + (t<= 420)) ==2) .* 10 ...
-            + (((t>420) + (t<= 540)) ==2) .* (t/6 - 60) ...
-            + (t>540) .* 30;
-auxdata.vl = auxdata.vl(auxdata.time); 
-auxdata.vl = smoothdata(auxdata.vl,'movmean',200);
-auxdata.vl = griddedInterpolant(auxdata.time, auxdata.vl);
-x0 = 0.27 * auxdata.vl(0) * flip(0:1:auxdata.len_platoon)';
-auxdata.v0 = ones(auxdata.len_platoon, 1) * auxdata.vl(0); 
-opts = odeset('RelTol',1e-10,'AbsTol',1e-12);
-[~, xl] = ode45(@(t,x) auxdata.vl(t), auxdata.time, x0(1), opts);
-auxdata.x0 = x0(2:end);
-auxdata.xl = griddedInterpolant(auxdata.time, xl);
 
 % Bando-FtL params
 auxdata.safe_dist = 2.5; 
@@ -60,16 +27,33 @@ auxdata.a = 100;
 auxdata.b = 10;
 auxdata.c = 1;
 
+% Leader's trajectory long
+    % auxdata.vl = @(t) (t<=120) * 30 ...
+    %             + (((t>120) + (t<= 240)) ==2) .* (-t/6 + 50) ...
+    %             + (((t>240) + (t<= 420)) ==2) .* 10 ...
+    %             + (((t>420) + (t<= 540)) ==2) .* (t/6 - 60) ...
+    %             + (t>540) .* 30;
+
+% Leader's trajectory short
+auxdata.vl = @(t) (t<=80) .* 30 ...
+            + (((t>80) + (t<= 120)) ==2) .* (-t./8 + 40) ...
+            + (((t>120) + (t<= 150)) ==2) .* 25 ...
+            + (((t>150) + (t<= 190)) ==2) .* (t./8 + 25/4) ...
+            + (t>190) .* 30;
+
+auxdata.utime = (0:1:240)';
+auxdata.time = (0:0.1:240)';
+x0 = (eq_headway(auxdata.vl(0), auxdata)+auxdata.l) * flip(0:1:auxdata.len_platoon)';
+auxdata.v0 = ones(auxdata.len_platoon, 1) * auxdata.vl(0); 
+opts = odeset('RelTol',1e-10,'AbsTol',1e-12);
+[~, xl] = ode45(@(t,x) auxdata.vl(t), auxdata.time, x0(1), opts);
+auxdata.x0 = x0(2:end);
+auxdata.xl = griddedInterpolant(auxdata.time, xl);
+
 %Initial solution  
 U0 = diff(auxdata.vl(auxdata.utime) - 5);
 U0 = [U0;0];
 [X0, V0, A0] = system_solve(U0, auxdata);
-% [X0, V0, U0] = initial_solution(auxdata);
-% U0 = griddedInterpolant(auxdata.time, U0);
-% U0 = U0(auxdata.utime);
-% [X0, V0] = system_solve(U0, auxdata);
-% U0 = zeros(length(auxdata.utime), length(auxdata.Ia));
-% [X0, V0] = system_solve(U0, auxdata);
 
 %% Run Optimizaer 
 

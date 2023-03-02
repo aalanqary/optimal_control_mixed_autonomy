@@ -1,14 +1,17 @@
-function [X, V, A] = system_solve(U_vec, auxdata) %% TODO what is causing the long running time
+function [X, V, A] = generic_system_solve(U_vec, auxdata) %% TODO what is causing the long running time
     if isempty(U_vec)
         U = @(t) [];
     else
         U = griddedInterpolant(auxdata.utime, U_vec, "previous");
     end
+    
+
     XV = ode5(@(t,XV) F(t, XV, U(t)', auxdata), ... %%TODO can we use ode45 with constant mesh
                      auxdata.time, [auxdata.x0; auxdata.v0]);
     V = XV(:, end - auxdata.len_platoon + 1: end);
     X = XV(:, 1:end - auxdata.len_platoon);
     
+
     if nargout > 2
         A = zeros(size(X));
         Xl = [auxdata.xl(auxdata.time), X]; 
@@ -16,7 +19,9 @@ function [X, V, A] = system_solve(U_vec, auxdata) %% TODO what is causing the lo
         Ah = ACC(Xl(:, auxdata.Ih), X(:, auxdata.Ih), ... 
                  Vl(:, auxdata.Ih), V(:, auxdata.Ih), auxdata); 
         A(:, auxdata.Ih) = Ah;
-        A(:, auxdata.Ia) = U(auxdata.time); 
+        if ~isempty(U)
+            A(:, auxdata.Ia) = U(auxdata.time); 
+        end 
     end 
 %     Linear solver
 %     x_0 = scenario("x_0");
