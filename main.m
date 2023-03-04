@@ -24,8 +24,8 @@ auxdata.gamma = 120;
 
 %Arctan Barrier auxdata (a(-arctan(bx+c)+pi/2)
 auxdata.a = 100;
-auxdata.b = 10;
-auxdata.c = 1;
+auxdata.b = 10000;
+auxdata.c = 100;
 
 % Leader's trajectory long
     % auxdata.vl = @(t) (t<=120) * 30 ...
