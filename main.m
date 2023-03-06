@@ -1,5 +1,5 @@
 %% Define problem 
-auxdata.platoon = [1, 0, 0, 0];
+auxdata.platoon = [1,0,0];
 auxdata.len_platoon = length(auxdata.platoon);
 auxdata.Ia = find(auxdata.platoon);
 auxdata.Ih = find(auxdata.platoon - 1);
@@ -12,8 +12,9 @@ auxdata.beta = 21;
 auxdata.l = 5; 
 
 % objective function auxdata 
-auxdata.mu1 = 1;
-auxdata.mu2 = 1;
+auxdata.mu1 = 2;
+auxdata.mu2 = 0.2;
+auxdata.iter = 0;
 
 % Constraints auxdata
 auxdata.d_min = auxdata.safe_dist;
@@ -55,13 +56,16 @@ U0 = diff(auxdata.vl(auxdata.utime) - 5);
 U0 = [U0;0];
 [X0, V0, A0] = system_solve(U0, auxdata);
 
-%% Run Optimizaer 
+%% Run Optimizer (first iteration)
+
+% First iteration
 
 options = optimoptions('fmincon','Display','iter-detailed', ...
                         'SpecifyObjectiveGradient', true ,...
                         'FunValCheck','on', 'DerivativeCheck', 'off',...
                         'maxfunevals',1e6, 'StepTolerance',1e-12, ...
-                        'algorithm', 'sqp');
+                        'algorithm', 'sqp', ...
+                        'MaxIterations', 400);
 
 fun = @(U) objective_gradient_acc(U, auxdata); 
 nonlcon = []; %@(U) nlc(U, auxdata);
@@ -73,4 +77,44 @@ a_min = -3 * ones(size(U0));
 a_max = 3 * ones(size(U0));
 [U_star, f_val, ~, output, ~, grad] = fmincon(fun, U0, A, b, Aeq, beq, a_min, a_max, nonlcon, options);
 [X_star, V_star] = system_solve(U_star, auxdata);
+figure(5)
+plot(U_star)
+drawnow;
+title("U_star")
+figure(6)
+Xl = [auxdata.xl(auxdata.time), X_star];
+plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
+title("AV Headway")
+drawnow;
 
+% %% Second iteration
+% options = optimoptions('fmincon','Display','iter-detailed', ...
+%                         'SpecifyObjectiveGradient', true ,...
+%                         'FunValCheck','on', 'DerivativeCheck', 'off',...
+%                         'maxfunevals',1e6, 'StepTolerance',1e-12, ...
+%                         'algorithm', 'sqp', ...
+%                         'MaxIterations', 500);
+% auxdata.mu2 = 1;
+% fun = @(U) objective_gradient_acc(U, auxdata); 
+% nonlcon = []; %@(U) nlc(U, auxdata);
+% A = [];
+% b = [];
+% [A, b] = lc(auxdata); 
+% Aeq = []; beq = []; 
+% a_min = -3 * ones(size(U0)); 
+% a_max = 3 * ones(size(U0));
+% [U_star_fin, f_val, ~, output, ~, grad] = fmincon(fun, U_star, A, b, Aeq, beq, a_min, a_max, nonlcon, options);
+% [X_star, V_star] =system_solve(U_star_fin, auxdata); 
+% figure(7)
+% plot(U_star_fin)
+% drawnow;
+% title("U_star Second iteration")
+% figure(8)
+% Xl = [auxdata.xl(auxdata.time), X_star];
+% plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
+% title("AV Headway")
+% drawnow;
+% figure(9)
+% Vl = [auxdata.vl(auxdata.time), V]; 
+% plot(Vl)
+% drawnow;
