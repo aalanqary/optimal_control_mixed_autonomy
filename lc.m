@@ -1,19 +1,17 @@
 function [A, b] = lc(auxdata)
-    Tf = auxdata.utime(end);
-    nt = length(auxdata.utime);
-%     x_0 = auxdata.v0(1); 
-%     X_l = auxdata.xl(auxdata.time);
-    v_0 = auxdata.v0(1); 
-    T = (Tf/nt) * ones(nt-1,nt);
-    T = [zeros(1,nt);T];
+    Xl = auxdata.xl(auxdata.utime);
+    x_0 = auxdata.x0(1);
+    v_0 = auxdata.v0(1);
+    ts = length(auxdata.utime);
+    T = auxdata.utime(end)/ts *  ones(ts-1,ts);
     T = tril(T);
-%     V = v_0 * ones(params("nt"), 1) + T*U;
-%     X = x_0 * ones(params("nt"), 1) + v_0 * params("t_int") + T*T*U;
-%     A = [T*T; -T*T;  -T]; 
-%     b = [X_l - x_0 - v_0 * params("t_int") - params("l") - params("eps"); ...
-%         params("gamma") - X_l + x_0 + v_0 * params("t_int") + params("l"); ...
-%         v_0 * ones(params("nt"), 1)];
-    A = -T;
-    b = v_0 * ones(length(auxdata.utime), 1);
+    T = [zeros(1,ts);T];
 
+    %V = v_0 * ones(ts, 1) + T*U;
+    %X = x_0 * ones(ts, 1) + v_0 * auxdata.utime + T*T*U;
+    A = [T*T; -T*T;  -T];
+    b = [Xl - (x_0 * ones(ts, 1) + v_0 * auxdata.utime) - auxdata.l - auxdata.d_min;
+        - Xl + (x_0 * ones(ts, 1) + v_0 * auxdata.utime) + auxdata.l + auxdata.d_max;
+        v_0 * ones(ts, 1)];
 end
+    

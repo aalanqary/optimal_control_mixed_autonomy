@@ -1,5 +1,5 @@
 %% Define problem 
-auxdata.platoon = [1, zeros(1, 10)];
+auxdata.platoon = [0, zeros(1, 30)];
 auxdata.len_platoon = length(auxdata.platoon);
 auxdata.Ia = find(auxdata.platoon);
 auxdata.Ih = find(auxdata.platoon - 1);
@@ -24,9 +24,14 @@ auxdata.a = 100;
 auxdata.b = 10;
 auxdata.c = 1;
 
-T = 250; 
-auxdata.utime = (0:1:T)';
-auxdata.time = (0:0.1:T)';
+% Leader's trajectory long
+    % auxdata.vl = @(t) (t<=120) * 30 ...
+    %             + (((t>120) + (t<= 240)) ==2) .* (-t/6 + 50) ...
+    %             + (((t>240) + (t<= 420)) ==2) .* 10 ...
+    %             + (((t>420) + (t<= 540)) ==2) .* (t/6 - 60) ...
+    %             + (t>540) .* 30;
+
+auxdata.vl = @(t) sin(0.1*t) + cos(0.05*t)  - t/100 + 32;
 
 % Leader's trajectory short
 % vl = @(t) (t<=80) .* 30 ...
@@ -34,12 +39,14 @@ auxdata.time = (0:0.1:T)';
 %             + (((t>120) + (t<= 150)) ==2) .* 25 ...
 %             + (((t>150) + (t<= 190)) ==2) .* (t./8 + 25/4) ...
 %             + (t>190) .* 30;
+
+T = 250; 
+auxdata.utime = (0:1:T)';
+auxdata.time = (0:0.1:T)';
+
 % vl = vl(auxdata.time); 
 % vl = smoothdata(vl, "movmean", 50);
 % auxdata.vl = griddedInterpolant(auxdata.time, vl);
-
-% auxdata.vl = @(t) sin(0.1*t) + cos(0.05*t)  - t/100 + 32;
-
 
 
 x0 = (eq_headway(auxdata.vl(0), auxdata)+auxdata.l) * flip(0:1:auxdata.len_platoon)';
