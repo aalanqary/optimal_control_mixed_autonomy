@@ -11,7 +11,7 @@ function [z, dz] = objective_gradient_acc(U_vec, auxdata)
         Fa = griddedInterpolant(auxdata.time, A);
         Fu = griddedInterpolant(auxdata.utime, U_vec, "previous");
         PQ0 = get_adjoint_ic(X, V, U_vec, auxdata);
-        PQ = ode5(@(t,PQ) F_adjoint(t, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
+        PQ = ode45(@(t,PQ) F_adjoint(t, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
         PQ = flip(PQ,1);
         Q = PQ(:, auxdata.len_platoon+1:end);
 
