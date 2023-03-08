@@ -11,7 +11,7 @@ function [z, dz] = objective_gradient_acc(U_vec, auxdata)
         Fa = griddedInterpolant(auxdata.time, A);
         Fu = griddedInterpolant(auxdata.utime, U_vec, "previous");
         PQ0 = get_adjoint_ic(X, V, U_vec, auxdata);
-        PQ = ode45(@(t,PQ) F_adjoint(t, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
+        PQ = ode5(@(t,PQ) F_adjoint(t, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
         PQ = flip(PQ,1);
         Q = PQ(:, auxdata.len_platoon+1:end);
 
@@ -109,7 +109,7 @@ function dl = L_partial(t, X, V, U, A, var, auxdata)
         Vf = [V(2:end); 0]; 
         Af = [A(2:end); 0]; 
     
-        h = Xl(auxdata.Ia) - X(auxdata.Ia) - auxdata.l;
+        h = Xl(1:end-1) - X - auxdata.l;
         hf = [h(2:end); 0];
     end
     switch var
@@ -117,14 +117,14 @@ function dl = L_partial(t, X, V, U, A, var, auxdata)
             dl_acc = 2 * A(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata) ...
                 + ismember(auxdata.Ih+1, auxdata.Ih)' * 2 .* Af(auxdata.Ih) .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
             
-            dl_penalty = ismember(auxdata.Ih+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*hf + auxdata.c).^2 + 1));
+            dl_penalty = ismember(auxdata.Ih+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*hf(auxdata.Ih) + auxdata.c).^2 + 1));
 
             dl = dl_acc + dl_penalty;
         case "xa"
             dl_acc = 2 * ismember(auxdata.Ia+1, auxdata.Ih)' .* Af(auxdata.Ia) .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
             
-            dl_penalty = -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*h + auxdata.c).^2 + 1)) .* -1 ...
-                + ismember(auxdata.Ia+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)/((auxdata.b*hf + auxdata.c).^2 + 1));
+            dl_penalty = -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*h(auxdata.Ia) + auxdata.c).^2 + 1)) .* -1 ...
+                + ismember(auxdata.Ia+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*hf(auxdata.Ia) + auxdata.c).^2 + 1));
           
             dl = dl_acc + dl_penalty;
         case "vh"
