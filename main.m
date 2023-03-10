@@ -1,19 +1,18 @@
 %% Define problem 
-auxdata.platoon = [1,0,0,0,1,0];
+auxdata.platoon = [1,0,1,0];
 auxdata.len_platoon = length(auxdata.platoon);
 auxdata.Ia = find(auxdata.platoon);
 auxdata.Ih = find(auxdata.platoon - 1);
-
 % Bando-FtL params
 auxdata.safe_dist = 2.5; 
 auxdata.v_max = 35; 
-auxdata.alpha = 0.5;
+auxdata.alpha = 0.1;
 auxdata.beta = 21;
 auxdata.l = 5; 
 
 % objective function auxdata 
 auxdata.mu1 = 2;
-auxdata.mu2 = 0.2;
+auxdata.mu2 = 2;
 auxdata.iter = 0;
 
 % Constraints auxdata
@@ -24,9 +23,9 @@ auxdata.eps = 2;
 auxdata.gamma = 120;
 
 %Arctan Barrier auxdata (a(-arctan(bx+c)+pi/2)
-auxdata.a = 100;
-auxdata.b = 10000;
-auxdata.c = 100;
+auxdata.a = 1;
+auxdata.b = 10000000;
+auxdata.c = 0.6;
 
 % Leader's trajectory long
     % auxdata.vl = @(t) (t<=120) * 30 ...
@@ -34,16 +33,18 @@ auxdata.c = 100;
     %             + (((t>240) + (t<= 420)) ==2) .* 10 ...
     %             + (((t>420) + (t<= 540)) ==2) .* (t/6 - 60) ...
     %             + (t>540) .* 30;
-
+auxdata.utime = (0:1:240)';
+auxdata.time = (0:0.1:240)';
 % Leader's trajectory short
-auxdata.vl = @(t) (t<=80) .* 30 ...
+vl = @(t) (t<=80) .* 30 ...
             + (((t>80) + (t<= 120)) ==2) .* (-t./8 + 40) ...
             + (((t>120) + (t<= 150)) ==2) .* 25 ...
             + (((t>150) + (t<= 190)) ==2) .* (t./8 + 25/4) ...
             + (t>190) .* 30;
+vl = vl(auxdata.time);
+vl = smoothdata(vl, "movmean", 200);
+auxdata.vl = griddedInterpolant(auxdata.time, vl);
 
-auxdata.utime = (0:1:240)';
-auxdata.time = (0:0.1:240)';
 x0 = (eq_headway(auxdata.vl(0), auxdata)+auxdata.l) * flip(0:1:auxdata.len_platoon)';
 auxdata.v0 = ones(auxdata.len_platoon, 1) * auxdata.vl(0); 
 opts = odeset('RelTol',1e-10,'AbsTol',1e-12);
