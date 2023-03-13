@@ -119,14 +119,14 @@ function dl = L_partial(t, X, V, U, A, var, auxdata)
             
             dl_penalty = ismember(auxdata.Ih+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*hf(auxdata.Ih) + auxdata.c).^2 + 1));
 
-            dl = dl_acc + dl_penalty;
+            dl = auxdata.mu1.*dl_acc + auxdata.mu2.*dl_penalty;
         case "xa"
             dl_acc = 2 * ismember(auxdata.Ia+1, auxdata.Ih)' .* Af(auxdata.Ia) .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
             
             dl_penalty = -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*h(auxdata.Ia) + auxdata.c).^2 + 1)) .* -1 ...
                 + ismember(auxdata.Ia+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*hf(auxdata.Ia) + auxdata.c).^2 + 1));
           
-            dl = dl_acc + dl_penalty;
+            dl = auxdata.mu1.*dl_acc + auxdata.mu2.*dl_penalty;
         case "vh"
             dl = 2 * A(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata) ...
                 + 2 * ismember(auxdata.Ih+1, auxdata.Ih)' .* Af(auxdata.Ih) .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);

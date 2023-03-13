@@ -1,5 +1,5 @@
 %% Define problem 
-auxdata.platoon = [1,0,1,0];
+auxdata.platoon = [1,1,1,0];
 auxdata.len_platoon = length(auxdata.platoon);
 auxdata.Ia = find(auxdata.platoon);
 auxdata.Ih = find(auxdata.platoon - 1);
@@ -12,7 +12,7 @@ auxdata.l = 5;
 
 % objective function auxdata 
 auxdata.mu1 = 2;
-auxdata.mu2 = 2;
+auxdata.mu2 = 0.4;
 auxdata.iter = 0;
 
 % Constraints auxdata
@@ -55,7 +55,7 @@ auxdata.xl = griddedInterpolant(auxdata.time, xl);
 %Initial solution  
 U0 = diff(auxdata.vl(auxdata.utime) - 5);
 U0 = [U0;0];
-U0 = [U0, U0]; 
+U0 = [U0, U0, U0]; 
 [X0, V0, A0] = system_solve(U0, auxdata);
 
 %% Run Optimizer (first iteration)
