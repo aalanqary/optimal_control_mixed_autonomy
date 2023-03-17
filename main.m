@@ -1,5 +1,5 @@
 %% Define problem 
-auxdata.platoon = [1,1,1,0];
+auxdata.platoon = [1, 0, 1, 0];
 auxdata.len_platoon = length(auxdata.platoon);
 auxdata.Ia = find(auxdata.platoon);
 auxdata.Ih = find(auxdata.platoon - 1);
@@ -12,7 +12,7 @@ auxdata.l = 5;
 
 % objective function auxdata 
 auxdata.mu1 = 2;
-auxdata.mu2 = 0.4;
+auxdata.mu2 = 0.01;
 auxdata.iter = 0;
 
 % Constraints auxdata
@@ -55,7 +55,7 @@ auxdata.xl = griddedInterpolant(auxdata.time, xl);
 %Initial solution  
 U0 = diff(auxdata.vl(auxdata.utime) - 5);
 U0 = [U0;0];
-U0 = [U0, U0, U0]; 
+U0 = [U0, U0]; 
 [X0, V0, A0] = system_solve(U0, auxdata);
 
 %% Run Optimizer (first iteration)
@@ -79,14 +79,21 @@ a_min = -3 * ones(size(U0));
 a_max = 3 * ones(size(U0));
 [U_star, f_val, ~, output, ~, grad] = fmincon(fun, U0, A, b, Aeq, beq, a_min, a_max, nonlcon, options);
 [X_star, V_star] = system_solve(U_star, auxdata);
-figure(5)
+figure(9)
+legend('v1', 'v2', 'v3', 'v4');
 plot(U_star)
 drawnow;
 title("U_star")
 figure(6)
 Xl = [auxdata.xl(auxdata.time), X_star];
 plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
-title("AV Headway")
+title("AV Headway first AV")
+figure(7)
+plot(Xl(:, 2) - Xl(:, 3) - auxdata.l)
+title("AV Headway second AV")
+figure(8)
+plot(Xl(:, 3) - Xl(:, 4) - auxdata.l)
+title("AV Headway third AV")
 drawnow;
 
 % %% Second iteration

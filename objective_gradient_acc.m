@@ -11,7 +11,7 @@ function [z, dz] = objective_gradient_acc(U_vec, auxdata)
         Fa = griddedInterpolant(auxdata.time, A);
         Fu = griddedInterpolant(auxdata.utime, U_vec, "previous");
         PQ0 = get_adjoint_ic(X, V, U_vec, auxdata);
-        PQ = ode5(@(t,PQ) F_adjoint(t, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
+        PQ = ode3(@(t,PQ) F_adjoint(t, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
         PQ = flip(PQ,1);
         Q = PQ(:, auxdata.len_platoon+1:end);
         display(Q)
@@ -43,6 +43,7 @@ function j = J(X, V, A, auxdata)
     j = running_cost + terminal_cost;
     figure(3)  
     plot(Vl)
+    legend('v1', 'v2', 'v3', 'v4');
    title("Velocity")
    drawnow;
 %     display(auxdata.iter)
@@ -57,11 +58,18 @@ function j = J(X, V, A, auxdata)
 %     plot(A)
 %     title("Acceleration, Objective = ", j)
 %     drawnow;
-    
-%     figure(2)
-%     plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
-%     title("AV Headway")
-%     drawnow;
+    penalty = auxdata.mu2 .* auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + pi/2);
+    figure(2)
+    plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
+    title("AV Headway leader first AV")
+    figure(5)
+    plot(Xl(:, 3) - Xl(:, 4) - auxdata.l)
+    title("AV Headway second AV")
+    figure(4)
+    display(penalty)
+    plot(penalty)
+    title("Penalty")
+    drawnow;
      
 
 end 
