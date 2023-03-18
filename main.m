@@ -6,13 +6,13 @@ auxdata.Ih = find(auxdata.platoon - 1);
 % Bando-FtL params
 auxdata.safe_dist = 2.5; 
 auxdata.v_max = 35; 
-auxdata.alpha = 0.1;
+auxdata.alpha = 0.05;
 auxdata.beta = 21;
 auxdata.l = 5; 
 
 % objective function auxdata 
 auxdata.mu1 = 2;
-auxdata.mu2 = 0.01;
+auxdata.mu2 = 0.1;
 auxdata.iter = 0;
 
 % Constraints auxdata
