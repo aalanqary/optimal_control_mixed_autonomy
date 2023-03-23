@@ -37,7 +37,8 @@ function j = J(X, V, A, auxdata)
     % sym(pi)
 %     auxdata.mu2_tmp = 1./(1+exp(-auxdata.iter+2));
     running_cost = auxdata.mu1 * sum(A.^2, "all")/length(auxdata.time) ...
-        + auxdata.mu2 * sum(auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + pi/2), "all")/length(auxdata.time); 
+        + auxdata.mu2 * sum(auxdata.a.*(-atan(auxdata.b.*(h) + auxdata.c) + pi/2), "all")/length(auxdata.time)...
+        + auxdata.mu3 * sum(auxdata.d.*(atan(auxdata.e.*(h) + auxdata.f) + pi/2), "all")/length(auxdata.time); 
     terminal_cost = 0; %-sum(X(end, :));
     j = running_cost + terminal_cost;
     figure(3)  
@@ -57,7 +58,8 @@ function j = J(X, V, A, auxdata)
 %     plot(A)
 %     title("Acceleration, Objective = ", j)
 %     drawnow;
-    penalty = auxdata.mu2 .* auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + pi/2);
+    penalty2 = auxdata.mu2 .* auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + pi/2);
+    penalty3 = auxdata.mu3 * auxdata.d.*(atan(auxdata.e.*h + auxdata.f) + pi/2);
     figure(2)
     plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
     title("AV Headway leader first AV")
@@ -65,12 +67,14 @@ function j = J(X, V, A, auxdata)
     plot(Xl(:, 3) - Xl(:, 4) - auxdata.l)
     title("AV Headway second AV")
     figure(4)
-    plot(penalty)
-    title("Penalty")
+    plot(penalty2)
+    title("Penalty 2")
+    legend('AV1', 'AV2')
+    figure(14)
+    plot(penalty3)
+    title("Penalty 3")
     legend('AV1', 'AV2')
     drawnow;
-     
-
 end 
 
 
@@ -124,16 +128,18 @@ function dl = L_partial(t, X, V, U, A, var, auxdata)
             dl_acc = 2 * A(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata) ...
                 + ismember(auxdata.Ih+1, auxdata.Ih)' * 2 .* Af(auxdata.Ih) .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
             
-            dl_penalty = ismember(auxdata.Ih+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*hf(auxdata.Ih) + auxdata.c).^2 + 1));
-
-            dl = auxdata.mu1.*dl_acc + auxdata.mu2.*dl_penalty;
+            dl_penalty_barrier = ismember(auxdata.Ih+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*hf(auxdata.Ih) + auxdata.c).^2 + 1));
+            dl_penalty_max_headway = ismember(auxdata.Ih+1, auxdata.Ia)' * 1 .* ((auxdata.d*auxdata.e)./((auxdata.e*hf(auxdata.Ih) + auxdata.f).^2 + 1));
+            dl = auxdata.mu1.*dl_acc + auxdata.mu2.*dl_penalty_barrier + auxdata.mu3*dl_penalty_max_headway;
         case "xa"
             dl_acc = 2 * ismember(auxdata.Ia+1, auxdata.Ih)' .* Af(auxdata.Ia) .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
             
-            dl_penalty = -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*h(auxdata.Ia) + auxdata.c).^2 + 1)) .* -1 ...
+            dl_penalty_barrier = -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*h(auxdata.Ia) + auxdata.c).^2 + 1)) .* -1 ...
                 + ismember(auxdata.Ia+1, auxdata.Ia)' * -1 .* ((auxdata.a*auxdata.b)./((auxdata.b*hf(auxdata.Ia) + auxdata.c).^2 + 1));
-          
-            dl = auxdata.mu1.*dl_acc + auxdata.mu2.*dl_penalty;
+            
+            dl_penalty_max_headway = 1 .* ((auxdata.d*auxdata.e)./((auxdata.e*h(auxdata.Ia) + auxdata.f).^2 + 1)) .* -1 ...
+                + ismember(auxdata.Ia+1, auxdata.Ia)' * 1 .* ((auxdata.d*auxdata.e)./((auxdata.e*hf(auxdata.Ia) + auxdata.f).^2 + 1));
+            dl = auxdata.mu1.*dl_acc + auxdata.mu2.*dl_penalty_barrier + auxdata.mu3*dl_penalty_max_headway;
         case "vh"
             dl = 2 * A(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata) ...
                 + 2 * ismember(auxdata.Ih+1, auxdata.Ih)' .* Af(auxdata.Ih) .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);
