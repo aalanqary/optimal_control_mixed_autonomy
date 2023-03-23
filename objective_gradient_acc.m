@@ -43,7 +43,7 @@ function j = J(X, V, A, auxdata)
     j = running_cost + terminal_cost;
     figure(3)  
     plot(Vl)
-    legend('v1', 'v2', 'v3', 'v4');
+    legend('leader', 'v1', 'v2', 'v3', 'v4');
    title("Velocity")
    drawnow;
 %     display(auxdata.iter)
@@ -58,6 +58,7 @@ function j = J(X, V, A, auxdata)
 %     plot(A)
 %     title("Acceleration, Objective = ", j)
 %     drawnow;
+    objective = auxdata.mu1 .* A.^2;
     penalty2 = auxdata.mu2 .* auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + pi/2);
     penalty3 = auxdata.mu3 * auxdata.d.*(atan(auxdata.e.*h + auxdata.f) + pi/2);
     figure(2)
@@ -66,6 +67,10 @@ function j = J(X, V, A, auxdata)
     figure(5)
     plot(Xl(:, 3) - Xl(:, 4) - auxdata.l)
     title("AV Headway second AV")
+    figure(16)
+    plot(objective)
+    title("Objective")
+    legend('AV1', 'HV2', 'AV2', 'HV2')
     figure(4)
     plot(penalty2)
     title("Penalty 2")

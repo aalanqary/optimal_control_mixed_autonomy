@@ -11,8 +11,9 @@ auxdata.beta = 21;
 auxdata.l = 5; 
 
 % objective function auxdata 
-auxdata.mu1 = 2;
-auxdata.mu2 = 0.1;
+auxdata.mu1 = 2*400;
+auxdata.mu2 = 0.05*100;
+auxdata.mu3 = 0.001*100;
 auxdata.iter = 0;
 
 % Constraints auxdata
@@ -24,9 +25,17 @@ auxdata.gamma = 120;
 
 %Arctan Barrier auxdata (a(-arctan(bx+c)+pi/2)
 auxdata.a = 1;
-auxdata.b = 10000000;
+auxdata.b = 20;
 auxdata.c = 0.6;
+auxdata.min_translation = 3.5;
+auxdata.c = -auxdata.b*auxdata.min_translation + auxdata.c;
 
+%Arctan max velocity auxdata (a(-arctan(bx+c)+pi/2))
+auxdata.d = 1;
+auxdata.e = 3;
+auxdata.f = -12.5;
+auxdata.max_translation = 87;
+auxdata.f = -auxdata.e*auxdata.max_translation + auxdata.f;
 % Leader's trajectory long
     % auxdata.vl = @(t) (t<=120) * 30 ...
     %             + (((t>120) + (t<= 240)) ==2) .* (-t/6 + 50) ...
@@ -88,12 +97,10 @@ figure(6)
 Xl = [auxdata.xl(auxdata.time), X_star];
 plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
 title("AV Headway first AV")
-figure(7)
-plot(Xl(:, 2) - Xl(:, 3) - auxdata.l)
-title("AV Headway second AV")
+
 figure(8)
 plot(Xl(:, 3) - Xl(:, 4) - auxdata.l)
-title("AV Headway third AV")
+title("AV Headway second AV(third car)")
 drawnow;
 
 % %% Second iteration
