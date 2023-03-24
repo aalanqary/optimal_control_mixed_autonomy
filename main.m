@@ -11,9 +11,9 @@ auxdata.beta = 21;
 auxdata.l = 5; 
 
 % objective function auxdata 
-auxdata.mu1 = 2*400;
-auxdata.mu2 = 0.05*100;
-auxdata.mu3 = 0.001*100;
+auxdata.mu1 = 2*225;
+auxdata.mu2 = 0.05*90;
+auxdata.mu3 = 0.001*150;
 auxdata.iter = 0;
 
 % Constraints auxdata
@@ -25,7 +25,7 @@ auxdata.gamma = 120;
 
 %Arctan Barrier auxdata (a(-arctan(bx+c)+pi/2)
 auxdata.a = 1;
-auxdata.b = 20;
+auxdata.b = 50;
 auxdata.c = 0.6;
 auxdata.min_translation = 3.5;
 auxdata.c = -auxdata.b*auxdata.min_translation + auxdata.c;
@@ -34,7 +34,7 @@ auxdata.c = -auxdata.b*auxdata.min_translation + auxdata.c;
 auxdata.d = 1;
 auxdata.e = 3;
 auxdata.f = -12.5;
-auxdata.max_translation = 87;
+auxdata.max_translation = 300;
 auxdata.f = -auxdata.e*auxdata.max_translation + auxdata.f;
 % Leader's trajectory long
     % auxdata.vl = @(t) (t<=120) * 30 ...
