@@ -1,202 +1,150 @@
-function [z, dz] = objective_gradient(U_vec, params, scenario)
+function [z, dz] = objective_gradient_energy(U_vec, auxdata)
     
     % Objective 
-
-    [X, V, A] = system_solve(U, params, scenario);
-    z = J(X, V, A, scenario, params);
+    [X, V, A] = system_solve(U_vec, auxdata);
+    z = J(V, A, auxdata);
     
     % Gradient
     if nargout >= 2
-        Fx = griddedInterpolant(scenario("time"),X);
-        Fv = griddedInterpolant(scenario("time"),V);
-        [P, Q] = adj_system_solve(@(t) Fx(t), @(t) Fv(t), U, params, scenario);
-        dz = -1* Q(:, scenario("Ia")) +  L_partial(X(:, scenario("Ia")), V(:, scenario("Ia")), U(scenario("time")), "u", params);
+        Fx = griddedInterpolant(auxdata.time, X);
+        Fv = griddedInterpolant(auxdata.time, V);
+        Fa = griddedInterpolant(auxdata.time, A);
+        Fu = griddedInterpolant(auxdata.utime, U_vec, "previous");
+        PQ0 = get_adjoint_ic(X, V, U_vec, auxdata);
+        PQ = ode3(@(t,PQ) F_adjoint(t, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
+        PQ = flip(PQ,1);
+        Q = PQ(:, auxdata.len_platoon+1:end);
+        P = PQ(:, 1:auxdata.len_platoon);
+        Q_short = griddedInterpolant(auxdata.time, Q);
+        Q_short = Q_short(auxdata.utime);
+        V_short = griddedInterpolant(auxdata.time, V);
+        V_short = V_short(auxdata.utime);
+        % Lu - zeta fu
+        dz = Q_short(:, auxdata.Ia) + L_partial(0, [],[],[], V_short,[],[], U_vec, [],  "u", auxdata);
     end 
  
 end 
 
 %%%%% Objective Function %%%%%
-function j = J(X, V, A, scenario, params)
+function j = J(V, A, auxdata)
     E = simplified_fuel_model(V,A,'RAV4');
-    JT = 0; %X(end, :);
-    time = scenario("time");
-    del_t = time(2) - time(1); 
-    j = del_t * params("mu1") * sum(E, "all")/sum(X(end, :), "all") ...
-        + params("mu2") * sum(JT);
+    running_cost = auxdata.mu1 * sum(E.^2, "all") * auxdata.dt;    
+    terminal_cost = 0; %-sum(X(end, :));
+    j = running_cost + terminal_cost;
 end 
 
-%%%%% ODE solver for the adjoint system %%%%%
-function [P, Q] = adj_system_solve(X, V, U, params, scenario)
-    PQ_0 = get_adjoint_ic(X, V, U, params, scenario);
-    [~,PQ] = ode15s(@(t,PQ) F_adjoint(t, PQ, X(t), V(t), U(t), scenario, params), flip(scenario("time")), PQ_0, params("ode_opt"));
-    PQ = flip(PQ,1);
-    P = PQ(:, 1:length(scenario("config")));
-    Q = PQ(:, length(scenario("config")) + 1: end);
-end 
+
 
 %%%%% Adjoint system %%%%%
-function PQ_dot = F_adjoint(t, PQ, X, V, U, scenario, params)
-    P = PQ(1:length(scenario("config")));
-    Q = PQ(length(scenario("config")) + 1: end);
-    
+function PQ_dot = F_adjoint(t, PQ, X, V, U, A, auxdata)
+    P = PQ(1:auxdata.len_platoon); %x multipliers 
+    Q = [PQ(auxdata.len_platoon+1:end); 0]; %v multipliers 
     P_dot = zeros(length(P), 1);
-    Q_dot = zeros(length(Q), 1);
-        
-    for i = scenario("Ih")
-        x = X(i);
-        v = V(i);
-        u = 0; 
-        if i == 1 
-            xl = scenario("xl");
-            xl = xl(t);
-            vl = scenario("vl");
-            vl = vl(t); 
-        else 
-            xl = X(i-1);
-            vl = V(i-1);
-        end
-        if ismember(i + 1, scenario("Ih"))
-            xf = X(i+1);
-            vf = V(i+1);
-        else
-            xf = -1; 
-            vf = -1;
-        end
-        P_dot(i) = L_partial([xl, x, xf], [vl, v, vf], u, "x_h", params) ...
-                   - ACC_partial(xl, x, vl, v, 2, params) * Q(i);
-        Q_dot(i) = L_partial([xl, x, xf], [vl, v, vf], u, "v_h", params) ...
-                                    - P(i) - ACC_partial(xl, x, vl, v, 4, params) * Q(i);
-        if ismember(i + 1, scenario("Ih"))
-            P_dot(i) = P_dot(i) - ACC_partial(x, xf, v, vf, 1, params) * Q(i+1);
-            Q_dot(i) = Q_dot(i) - ACC_partial(x, xf, v, vf, 3, params) * Q(i+1);        
-        end 
-    end 
+    Q_dot = zeros(length(Q)-1, 1);
+    Xl = [auxdata.xl(t); X]; 
+    Xf = [X(2:end); 0]; 
+    Vl = [auxdata.vl(t); V]; 
+    Vf = [V(2:end); 0]; 
 
-    % For x_a need to know: maybe x,v and xf,vf all as functions
-    for i = scenario("Ia") 
-        x = X(i);
-        v = V(i);
-        u = U(:, scenario("Ia") == i);
-        xl = -1;
-        vl = -1;
-        if ismember(i + 1, scenario("Ih"))
-            xf = X(i+1);
-            vf = V(i+1);
-        else
-            xf = -1; 
-            vf = -1;
-        end
-        P_dot(i) = L_partial([xl, x, xf], [vl, v, vf], u, "x_a", params);
-        Q_dot(i) = L_partial([xl, x, xf], [vl, v, vf], u, "v_a", params) - P(i);
-        if ismember(i + 1, scenario("Ih"))
-            P_dot(i) = P_dot(i) - ACC_partial(x, xf, v, vf, 1, params) * Q(i+1);
-            Q_dot(i) = Q_dot(i) - ACC_partial(x, xf, v, vf, 3, params) * Q(i+1);        
-        end 
-    end
+    %%%% Human vehicles (HV) %%%%
+    %%%% dot(zeta) = -Ly + zeta fy
+    P_dot(auxdata.Ih) = -L_partial(t, X, Xl, Xf, V, Vl, Vf, U, A, "xh", auxdata) ...
+        - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata) ...
+        - Q(auxdata.Ih+1) .* ismembc(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
     
-                                
+    Q_dot(auxdata.Ih) = - L_partial(t, X, Xl, Xf, V, Vl, Vf, U, A, "vh", auxdata) ...
+        - P(auxdata.Ih) ...
+        - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata)  ...
+        - Q(auxdata.Ih+1) .* ismembc(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);
+    
+    %%%% Automated vehicles (AV) %%%%
+    P_dot(auxdata.Ia) = -L_partial(t, X, Xl, Xf, V, Vl, Vf, U, A, "xa", auxdata) ...
+        - Q(auxdata.Ia+1) .* ismembc(auxdata.Ia+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
+    
+    Q_dot(auxdata.Ia) = -L_partial(t, X, Xl, Xf, V, Vl, Vf, U, A, "va", auxdata) ...
+        - P(auxdata.Ia) ...
+        - Q(auxdata.Ia+1) .* ismembc(auxdata.Ia+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "vl", auxdata);
     PQ_dot = [P_dot; Q_dot];
 end 
 
 %%%%% Partial derivatives of the running cost %%%%%
-function l_partial = L_partial(X, V, u, var, params)
-    load(['RAV4_coeffs.mat']);
-    C2 = double(C2); q0 = double(q0);
-    
-    switch var
-        case "x_h" 
-            a = ACC(X(1), X(2), V(1), V(2), params);
-            partial_a_x = ACC_partial(X(1), X(2), V(1), V(2), 2, params);
-            l_partial = (p0 + p1.* V(2) + p2 * V(2).^2) * partial_a_x;
-            if a > 0 
-                l_partial = l_partial + 2* (q0 + q1 * V(2)) * a * partial_a_x;
-            end 
-            if V(3) >= 0 %% That is the follower is human car
-                af = ACC(X(2), X(3), V(2), V(3), params);
-                partial_a_x = ACC_partial(X(2), X(3), V(2), V(3), 1, params);
-                l_partial = l_partial + (p0 + p1.* V(3) + p2 * V(3).^2) * partial_a_x;
-                if af > 0
-                    l_partial = l_partial + 2* (q0 + q1 * V(3)) * af * partial_a_x;
-                end 
-            end 
-            
-            
-        case "v_h" 
-            a = ACC(X(1), X(2), V(1), V(2), params);
-            partial_a_v = ACC_partial(X(1), X(2), V(1), V(2), 4, params);
-            l_partial = C1 + 2*C2*V(2) + 3*C3*V(2)^2 ...
-                        + (p0 + p1.* V(2) + p2 * V(2).^2) * partial_a_v ...
-                        + (p1 + 2*p2*V(2)) * a;
-            if a > 0 
-                l_partial = l_partial + 2* (q0 + q1*V(2)) * a * partial_a_v ...
-                            + q1 * a^2;
-            end 
-            if V(3) >= 0 %% That is the follower is human car
-                af = ACC(X(2), X(3), V(2), V(3), params);
-                partial_a_v = ACC_partial(X(2), X(3), V(2), V(3), 3, params);
-                l_partial = l_partial + (p0 + p1.* V(3) + p2 * V(3).^2) * partial_a_v;
-                if af > 0
-                    l_partial = l_partial + 2* (q0 + q1 * V(3)) * af * partial_a_v;
-                end 
-            end 
-            
-            
-        case "x_a" 
-            l_partial = 0;
-            if V(3) >= 0 %% That is the follower is human car
-                af = ACC(X(2), X(3), V(2), V(3), params);
-                partial_a_x = ACC_partial(X(2), X(3), V(2), V(3), 1, params);
-                l_partial = l_partial + (p0 + p1.* V(3) + p2 * V(3).^2) * partial_a_x;
-                if af > 0
-                    l_partial = l_partial + 2* (q0 + q1 * V(3)) * af * partial_a_x;
-                end 
-            end 
-            
-            
-        case "v_a" 
-            a = u;
-            l_partial = C1 + 2*C2*V(2) + 3*C3*V(2)^2 ...
-                        + (p1 + 2*p2*V(2)) * a;
-            if a > 0 
-                l_partial = l_partial + q1 * a^2;
-            end 
-            if V(3) >= 0 %% That is the follower is human car
-                af = ACC(X(2), X(3), V(2), V(3), params);
-                partial_a_v = ACC_partial(X(2), X(3), V(2), V(3), 3, params);
-                l_partial = l_partial + (p0 + p1.* V(3) + p2 * V(3).^2) * partial_a_v;
-                if af > 0
-                    l_partial = l_partial + 2* (q0 + q1 * V(3)) * af * partial_a_v;
-                end 
-            end 
-        
-       case "u" 
-           l_partial = p0 + p1 .* V + p2 .* V.^2; 
-           if u > 0
-               l_partial = l_partial + 2.*q0.*u + 2.*q1.*V.*u;
-           end 
-                     
+function dl = L_partial(t, X, Xl, Xf, V, Vl, Vf, U, A, var, auxdata)
+    C = auxdata.C;
+    p = auxdata.p;
+    q = auxdata.q;
+
+    Ia = auxdata.Ia;
+    Ih = auxdata.Ih;
+    if var ~= "u"
+%         Xl = [auxdata.xl(t); X]; 
+%         Xf = [X(2:end); 0]; 
+%         Vl = [auxdata.vl(t); V]; 
+%         Vf = [V(2:end); 0]; 
+        Af = [A(2:end); 0]; 
+    end
+    if var == "xh" 
+        da = ACC_partial(Xl(Ih), X(Ih), Vl(Ih), V(Ih), "x", auxdata);
+        daf = ACC_partial(X(Ih), Xf(Ih), V(Ih), Vf(Ih), "xl", auxdata);
+        dl = (p(1) + p(2).* V(Ih) + p(3) .* V(Ih).^2) .* da ...
+            + (A(Ih) > 0) .* 2 .* ( q(1) +  q(2) .* V(Ih)) .* A(Ih) .* da;
+        dlf = + ismembc(Ih+1, Ih)' .* (( p(1) +  p(2).* Vf(Ih) +  p(3) .* Vf(Ih).^2) .* daf ...
+            + (Af(Ih) > 0) .* 2 .* ( q(1) +  q(2) * Vf(Ih)) .* Af(Ih) .* daf); 
+        dl = dl + dlf;
+
+    elseif var == "xa"
+        daf = ACC_partial(X(Ia), Xf(Ia), V(Ia), Vf(Ia), "xl", auxdata);
+        dl = 0;
+        dlf = ismembc(Ia+1, Ih)' .* (( p(1) +  p(2).* Vf(Ia) +  p(3) .* Vf(Ia).^2) .* daf ...
+            + (Af(Ia) > 0) .* 2 .* ( q(1) +  q(2) * Vf(Ia)) .* Af(Ia) .* daf); 
+        dl = dl + dlf;
+
+    elseif var == "vh"
+        da = ACC_partial(Xl(Ih), X(Ih), Vl(Ih), V(Ih), "v", auxdata);
+        daf = ACC_partial(X(Ih), Xf(Ih), V(Ih), Vf(Ih), "vl", auxdata);
+        dl = C(2) + 2*C(3)*V(Ih) + 3*C(4)*V(Ih).^2 ...
+             + ( p(1) +  p(2)*V(Ih) +  p(3)*V(Ih).^2) .* da ...
+             + ( p(2) + 2* p(3)*V(Ih)) .* A(Ih) ...
+             + (A(Ih) > 0) .* (2 * ( q(1) +  q(2) * V(Ih)) .* A(Ih) .* da ...
+             +  q(2) * A(Ih).^2);
+        dlf = + ismembc(Ih+1, Ih)' .* (( p(1) +  p(2).* Vf(Ih) +  p(3) .* Vf(Ih).^2) .* daf ...
+            + (Af(Ih) > 0) .* 2 .* ( q(1) +  q(2) * Vf(Ih)) .* Af(Ih) .* daf); 
+        dl = dl + dlf;
+    elseif var == "va"
+        daf = ACC_partial(X(Ia), Xf(Ia), V(Ia), Vf(Ia), "vl", auxdata);
+
+        dl  = C(2) + 2*C(3)*V(Ia) + 3*C(4)*V(Ia).^2 ...
+              + ( p(2) + 2* p(3)*V(Ia)) .* A(Ia);
+        dlf = ismembc(Ia+1, Ih)' .* (( p(1) +  p(2).* Vf(Ia) +  p(3) .* Vf(Ia).^2) .* daf ...
+            + (Af(Ia) > 0) .* 2 .* ( q(1) +  q(2) * Vf(Ia)) .* Af(Ia) .* daf); 
+        dl = dl + dlf;
+    else 
+       dl =  p(1) +  p(2) .* V(:, Ia) +  p(3) .* V(:, Ia).^2 ...
+          + (U(:, Ia) > 0) .* (2.* q(1).*U(:, Ia) + 2.* q(2).*V(:, Ia).*U(:, Ia));
     end 
 end 
 
 %%%%% Partial derivatives of the ACC function %%%%%
-function a_partial = ACC_partial(xl, xf, vl, vf, var, params)
-    
-    V_prime = @(head_way) (params("v_max") * (sech(head_way - params("safe_dist"))).^2) ./ (1+tanh(params("l")+params("safe_dist")));
-    head_way = xl - xf - params("l");
-    switch var
-        case 1 
-            a_partial = params("alpha") * V_prime(head_way) - 2*params("beta")*((vl-vf)./head_way.^3);
-        case 2
-            a_partial = -1*params("alpha") * V_prime(head_way) + 2*params("beta")*((vl-vf)./head_way.^3);
-        case 3
-            a_partial = params("beta") ./ head_way.^2;
-        case 4
-            a_partial = -1*params("alpha") - params("beta") ./ head_way.^2;
+function a_partial = ACC_partial(Xl, X, Vl, V, var, auxdata)
+    l = auxdata.l; 
+    safe_dist = auxdata.safe_dist;
+    k = auxdata.k;
+    v_max = auxdata.v_max;
+
+    head_way = Xl - X - l;
+    V_prime = (v_max * k * (1./cosh(k*head_way - safe_dist)).^2) ./ (1+tanh(l+safe_dist));
+    if var == "xl" 
+            a_partial = k * auxdata.alpha * V_prime - 2 * auxdata.beta * ((Vl-V)./head_way.^3);
+    elseif var == "x"
+            a_partial = -k * auxdata.alpha * V_prime + 2*auxdata.beta*((Vl-V)./head_way.^3);
+    elseif var == "vl"
+            a_partial = auxdata.beta ./ head_way.^2;
+    elseif var == "v"
+            a_partial = -auxdata.alpha - auxdata.beta ./ head_way.^2;
     end 
 end 
 
-function PQ_0 = get_adjoint_ic(X, V, U, params, scenario)
-    Q_0 = zeros(length(scenario("config")), 1);
-    P_0 = zeros(length(scenario("config")), 1);
-    PQ_0 = [P_0;Q_0];
+function PQ_0 = get_adjoint_ic(X, V, U, auxdata)
+    Q_0 = zeros(auxdata.len_platoon, 1);
+    P_0 = zeros(auxdata.len_platoon, 1);
+    PQ_0 = [P_0; Q_0];
 end 

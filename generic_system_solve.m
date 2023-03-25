@@ -6,7 +6,7 @@ function [X, V, A] = generic_system_solve(U_vec, auxdata) %% TODO what is causin
     end
     
 
-    XV = ode5(@(t,XV) F(t, XV, U(t)', auxdata), ... %%TODO can we use ode45 with constant mesh
+    XV = ode3(@(t,XV) F(t, XV, U(t)', auxdata), ... 
                      auxdata.time, [auxdata.x0; auxdata.v0]);
     V = XV(:, end - auxdata.len_platoon + 1: end);
     X = XV(:, 1:end - auxdata.len_platoon);
