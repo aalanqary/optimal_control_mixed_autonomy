@@ -47,6 +47,11 @@
     auxdata.max_translation = 300;
     auxdata.f = -auxdata.e*auxdata.max_translation + auxdata.f;
 
+% const grad params
+    auxdata.eps = 0.1;
+    auxdata.gamma = 0.1;
+    auxdata.d_min = 2.5;
+
 
 %Simple leader traj
     T = 250; 
@@ -123,7 +128,7 @@ Aeq = []; beq = [];
 a_min = []; %-3 * ones(size(U0)); 
 a_max = []; %3 * ones(size(U0));
 tic
-[U_star, f_val, ~, output, ~, grad] = fmincon(fun, U0, A, b, Aeq, beq, a_min, a_max, nonlcon, options);
+[U_star, f_val, ~, output, ~, grad] = fmincon(fun, U0, A, b, Aeq, beq, a_min, a_max, nonlcon, options); % switch to ip solver instead of sqp
 [X_star, V_star, A_star] = generic_system_solve(U_star, auxdata);
 toc
 
