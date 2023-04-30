@@ -1,4 +1,4 @@
-function [X, V, A, Fx, Fv, Fa, Fu, PQ0, P_dot, Q_dot] = constraint_gradient_min_computation(U_vec, auxdata)
+function [X, V, A, Fx, Fv, Fa, Fu] = constraint_gradient_min_computation(U_vec, auxdata)
     
     % Objective 
     [X, V, A] = generic_system_solve(U_vec, auxdata);
@@ -27,9 +27,6 @@ function [X, V, A, Fx, Fv, Fa, Fu, PQ0, P_dot, Q_dot] = constraint_gradient_min_
         Fv = griddedInterpolant(auxdata.time, V);
         Fa = griddedInterpolant(auxdata.time, A);
         Fu = griddedInterpolant(auxdata.utime, U_vec, "previous");
-        PQ0 = get_adjoint_ic(X, V, U_vec, auxdata);
-        P_dot = 0;
-        Q_dot = 0;
 %          [P_dot, Q_dot] = F_adjoint(t, PQ, X, V, U, A, auxdata);
 %         [P_dot, Q_dot]  = F_adjoint(t, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata);
 %         PQ = ode3(@(t,PQ) F_adjoint(t, i, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
