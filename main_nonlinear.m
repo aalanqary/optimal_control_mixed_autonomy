@@ -51,7 +51,7 @@
     auxdata.eps = 0.1;
     auxdata.gamma = 0.1;
     auxdata.d_min = 2.5;
-    auxdata.d_max = 300;
+    auxdata.d_max = 100000;
 
 % Basic Leader traj
     
@@ -60,26 +60,26 @@
     auxdata.udt = 1; 
     auxdata.utime = (0:auxdata.udt:T)';
     auxdata.time = (0:auxdata.dt:T)';
-    vl = @(t) (t<=10).*20;
+    vl = @(t) (t<=1000).*20;
     vl = vl(auxdata.time); 
     vl = smoothdata(vl, "movmean", 50);
     auxdata.vl = griddedInterpolant(auxdata.time, vl);
 
 % %Simple leader traj
-%     T = 250; 
-%     auxdata.dt = 0.1;
-%     auxdata.udt = 1; 
-%     auxdata.utime = (0:auxdata.udt:T)';
-%     auxdata.time = (0:auxdata.dt:T)';
-%     
-%     vl = @(t) (t<=80) .* 30 ...
-%                 + (((t>80) + (t<= 120)) ==2) .* (-t./8 + 40) ...
-%                 + (((t>120) + (t<= 150)) ==2) .* 25 ...
-%                 + (((t>150) + (t<= 190)) ==2) .* (t./8 + 25/4) ...
-%                 + (t>190) .* 30;
-%     vl = vl(auxdata.time); 
-%     vl = smoothdata(vl, "movmean", 50);
-%     auxdata.vl = griddedInterpolant(auxdata.time, vl);
+     T = 250; 
+     auxdata.dt = 0.1;
+     auxdata.udt = 1; 
+     auxdata.utime = (0:auxdata.udt:T)';
+     auxdata.time = (0:auxdata.dt:T)';
+     
+     vl = @(t) (t<=80) .* 30 ...
+                 + (((t>80) + (t<= 120)) ==2) .* (-t./8 + 40) ...
+                 + (((t>120) + (t<= 150)) ==2) .* 25 ...
+                 + (((t>150) + (t<= 190)) ==2) .* (t./8 + 25/4) ...
+                 + (t>190) .* 30;
+     vl = vl(auxdata.time); 
+     vl = smoothdata(vl, "movmean", 50);
+     auxdata.vl = griddedInterpolant(auxdata.time, vl);
 
 %Sinusoidal leader traj
 %     T = 250; 

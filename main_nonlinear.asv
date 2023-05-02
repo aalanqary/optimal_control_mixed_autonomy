@@ -51,6 +51,7 @@
     auxdata.eps = 0.1;
     auxdata.gamma = 0.1;
     auxdata.d_min = 2.5;
+    auxdata.d_max = 300;
 
 
 %Simple leader traj
@@ -118,12 +119,13 @@ options = optimoptions('fmincon','Display','iter-detailed', ...
                         'algorithm', 'sqp', ...
                         'ConstraintTolerance', 1e-10);
 
-nonlcon = @(U) nonlcon_const(U, auxdata);
+nonlcon = @(U) nonlcon_const_max(U, auxdata);
 fun = @(U) objective_gradient_acc_penalty(U, auxdata); 
 % nonlcon = []; %@(U) nlc(U, auxdata);
 A = [];
 b = [];
-% [A, b] = lc_v(auxdata); 
+% [A, b] = lc_v(auxd
+% ata); 
 Aeq = []; beq = []; 
 a_min = []; %-3 * ones(size(U0)); 
 a_max = []; %3 * ones(size(U0));

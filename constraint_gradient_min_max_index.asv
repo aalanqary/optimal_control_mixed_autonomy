@@ -4,7 +4,23 @@ function [c, dc] = constraint_gradient_min_max_index(X, V, A, Fx, Fv, Fa, Fu, au
 %     [X, V, A] = system_solve(U_vec, auxdata);
     cmin = Cmin(auxdata.Ia(i), X, V, A, auxdata);
     cmax = Cmax(auxdata.Ia(i), X, V, A, auxdata);
-    c = [cmin, cmax];
+    c = [cmin; cmax];
+    
+%     figure(1)
+%     plot(U_vec)
+%     title("AV Acceleration. Objective = ", z)
+%     drawnow;
+% 
+%     figure(2)
+%     [Xlin, ~] = linear_ode3_system_solve(U_vec, auxdata);
+%     plot(auxdata.time, auxdata.xl(auxdata.time) - X(:, 1) - auxdata.l, auxdata.utime, auxdata.xl(auxdata.utime) - Xlin - auxdata.l)
+%     title("AV Headway")
+%     drawnow;
+% 
+%     figure(3)
+%     plot([auxdata.vl(auxdata.time), V])
+%     title("Velocities")
+%     drawnow;
 
 
     % Gradient
@@ -79,20 +95,20 @@ function PQ_dot = F_adjoint(t, i, PQ, X, V, U, A, auxdata)
 
     %%%% Human vehicles (HV) %%%%
     %%%% dot(zeta) = -Ly + zeta fy
-    P_dot(auxdata.Ih) = phi_partial_min(t, i, X, V, U, A, "xh", auxdata) ...
+    P_dot(auxdata.Ih) = phi_partial(t, i, X, V, U, A, "xh", auxdata) ...
         - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata) ...
         - Q(auxdata.Ih+1) .* ismembc(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
     
-    Q_dot(auxdata.Ih) = phi_partial_min(t, i, X, V, U, A, "vh", auxdata) ...
+    Q_dot(auxdata.Ih) = phi_partial(t, i, X, V, U, A, "vh", auxdata) ...
         - P(auxdata.Ih) ...
         - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata)  ...
         - Q(auxdata.Ih+1) .* ismembc(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);
     
     %%%% Automated vehicles (AV) %%%%
-    P_dot(auxdata.Ia) = phi_partial_min(t, i, X, V, U, A, "xa", auxdata) ...
+    P_dot(auxdata.Ia) = phi_partial(t, i, X, V, U, A, "xa", auxdata) ...
         - Q(auxdata.Ia+1) .* ismembc(auxdata.Ia+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
     
-    Q_dot(auxdata.Ia) = phi_partial_min(t, i, X, V, U, A, "va", auxdata) ...
+    Q_dot(auxdata.Ia) = phi_partial(t, i, X, V, U, A, "va", auxdata) ...
         - P(auxdata.Ia) ...
         - Q(auxdata.Ia+1) .* ismembc(auxdata.Ia+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "vl", auxdata);
     PQ_dot = [P_dot; Q_dot];
@@ -100,7 +116,7 @@ end
 
 
 %%%%% Partial derivatives of the running cost %%%%%
-function dl = phi_partial_min(t, i, X, V, U, A, var, auxdata)
+function dl = phi_partial(t, i, X, V, U, A, var, auxdata)
     Ia = auxdata.Ia;
     Ih = auxdata.Ih;
     if var ~= "u"
@@ -119,8 +135,7 @@ function dl = phi_partial_min(t, i, X, V, U, A, var, auxdata)
             cond1 = (h< -eps);
             cond2 = and((h<= eps), (h >= - eps));
             phi = ones(length(h)).*cond1 + (1/(4*eps))*h.* cond2;
-            idx = find(auxdata.Ih == car_index-1);
-            dl(idx) = -phi; %%d phi/ dxi-1; 
+            dl(i-1) = -phi; %%d phi/ dxi-1; 
         end
     elseif var == "xa"
         car_index = auxdata.Ia(i); % check this line
@@ -130,16 +145,14 @@ function dl = phi_partial_min(t, i, X, V, U, A, var, auxdata)
         cond1 = (h< -eps);
         cond2 = and((h<= eps), (h >= - eps));
         phi = -ones(length(h)).*cond1 + (1/(4*eps))*h.* cond2;
-        idx = find(auxdata.Ia == car_index);
-        dl(idx) = -phi; %%d phi/ dxi; 
+        dl(i) = -phi; %%d phi/ dxi; 
         if ismembc(car_index-1, Ia)
             eps = auxdata.eps; 
             dh = - 2 * Xl(car_index) + X(car_index) + auxdata.l + auxdata.d_min + eps;
             cond1 = (dh< -eps);
             cond2 = and((dh<= eps), (dh >= - eps));
             phi = ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2; % flips cond1
-            idx = find(auxdata.Ia == car_index - 1);
-            dl(idx) = -phi; %%d phi/ dxi; 
+            dl(i-1) = -phi; %%d phi/ dxi-1;
         end
     elseif var == "vh"
         dl = 0 * Ih; 
