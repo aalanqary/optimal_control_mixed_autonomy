@@ -54,16 +54,16 @@
     auxdata.d_max = 100000;
 
 % Basic Leader traj
-    
-    T = 100;
-    auxdata.dt = 0.1;
-    auxdata.udt = 1; 
-    auxdata.utime = (0:auxdata.udt:T)';
-    auxdata.time = (0:auxdata.dt:T)';
-    vl = @(t) (t<=1000).*20;
-    vl = vl(auxdata.time); 
-    vl = smoothdata(vl, "movmean", 50);
-    auxdata.vl = griddedInterpolant(auxdata.time, vl);
+%     
+%     T = 100;
+%     auxdata.dt = 0.1;
+%     auxdata.udt = 1; 
+%     auxdata.utime = (0:auxdata.udt:T)';
+%     auxdata.time = (0:auxdata.dt:T)';
+%     vl = @(t) (t<=1000).*20;
+%     vl = vl(auxdata.time); 
+%     vl = smoothdata(vl, "movmean", 50);
+%     auxdata.vl = griddedInterpolant(auxdata.time, vl);
 
 % %Simple leader traj
      T = 250; 

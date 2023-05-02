@@ -12,11 +12,11 @@ function [c, ceq, dc, dceq] = nonlcon_const_max(U, auxdata)
     dceq = [];
     c = c_all;
     dc = dc_all;
-     display(c);
-     figure(1);
-     title("Constraint Gradient")
-     plot(dc);
-     legend('car 1 min', 'car 2 min', 'car 1 max', 'car 2 max');
-     title("Constraint Gradients")
-    drawnow;
+%      display(c);
+%      figure(1);
+%      title("Constraint Gradient")
+%      plot(dc);
+%      legend('car 1 min', 'car 2 min', 'car 1 max', 'car 2 max');
+%      title("Constraint Gradients")
+%     drawnow;
 end

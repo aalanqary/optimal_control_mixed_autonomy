@@ -11,7 +11,7 @@ function [c, dc] = constraint_gradient_min_max_index(X, V, A, Fx, Fv, Fa, Fu, au
     if nargout >= 2
         %PQ = ode3(@(t,PQ) F_adjoint_mod(P_dot, Q_dot, i, auxdata), flip(auxdata.time), PQ0);
         PQ0 = get_adjoint_ic(X, V, U_vec, auxdata);
-        PQ = ode3(@(t,PQ) F_adjoint(t, i, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
+        PQ = ode3(@(t,PQ) F_adjoint_min(t, i, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
         PQ = flip(PQ,1);
         Q = PQ(:, auxdata.len_platoon+1:end);
         %P = PQ(:, 1:auxdata.len_platoon);
@@ -19,9 +19,9 @@ function [c, dc] = constraint_gradient_min_max_index(X, V, A, Fx, Fv, Fa, Fu, au
         Q_short = Q_short(auxdata.utime);
         
         % Lu - zeta fu
-        dc_min = Q_short(:, auxdata.Ia) + phi_partial(flip(auxdata.time), 0, [], [], U_vec, [],  "u", auxdata)'; 
+        dc_min = Q_short(:, auxdata.Ia) + phi_partial_min(flip(auxdata.time), 0, [], [], U_vec, [],  "u", auxdata)'; 
 
-        PQ = ode3(@(t,PQ) F_adjointdmax(t, i, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
+        PQ = ode3(@(t,PQ) F_adjoint_max(t, i, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
         PQ = flip(PQ,1);
         Q = PQ(:, auxdata.len_platoon+1:end);
         %P = PQ(:, 1:auxdata.len_platoon);
@@ -29,7 +29,7 @@ function [c, dc] = constraint_gradient_min_max_index(X, V, A, Fx, Fv, Fa, Fu, au
         Q_short = Q_short(auxdata.utime);
         
         % Lu - zeta fu
-        dc_max = Q_short(:, auxdata.Ia) + phi_partial(flip(auxdata.time), 0, [], [], U_vec, [],  "u", auxdata)'; 
+        dc_max = Q_short(:, auxdata.Ia) + phi_partial_max(flip(auxdata.time), 0, [], [], U_vec, [],  "u", auxdata)'; 
         dc = [dc_min; dc_max];
 %         figure(4); 
 %         plot(dz)
@@ -48,7 +48,6 @@ function cmin = Cmin(i, X, V, A, auxdata)
     cond1 = (h< -eps);
     cond2 = and((h<= eps), (h >= - eps));
     c = h.*cond1 + - (1/(4*eps))* (h - eps).^2 .* cond2;
-    display(i);
     cmin = -auxdata.gamma - trapz(auxdata.time, c); 
 end 
 
@@ -66,7 +65,7 @@ end
 
 
 %%%%% Adjoint system %%%%%
-function PQ_dot = F_adjoint(t, i, PQ, X, V, U, A, auxdata)
+function PQ_dot = F_adjoint_min(t, i, PQ, X, V, U, A, auxdata)
     P = PQ(1:auxdata.len_platoon); %x multipliers 
     Q = [PQ(auxdata.len_platoon+1:end); 0]; %v multipliers 
     P_dot = zeros(length(P), 1);
@@ -115,10 +114,10 @@ function dl = phi_partial_min(t, i, X, V, U, A, var, auxdata)
         dl = 0 * Ih; 
         if ismembc(car_index-1, Ih)
             eps = auxdata.eps; 
-            h = - 2 * Xl(car_index) + X(car_index) + auxdata.l + auxdata.d_min + eps; 
-            cond1 = (h< -eps);
-            cond2 = and((h<= eps), (h >= - eps));
-            phi = ones(length(h)).*cond1 + (1/(4*eps))*h.* cond2;
+            dh = - 2 * Xl(car_index) + X(car_index) + auxdata.l + auxdata.d_min + eps; 
+            cond1 = (dh< -eps);
+            cond2 = and((dh<= eps), (dh >= - eps));
+            phi = ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2; % length of dh is 1
             idx = find(auxdata.Ih == car_index-1);
             dl(idx) = -phi; %%d phi/ dxi-1; 
         end
@@ -126,10 +125,10 @@ function dl = phi_partial_min(t, i, X, V, U, A, var, auxdata)
         car_index = auxdata.Ia(i); % check this line
         dl = 0 * Ia; 
         eps = auxdata.eps;
-        h = Xl(car_index) -  2 * X(car_index)- auxdata.l - auxdata.d_min - eps; 
-        cond1 = (h< -eps);
-        cond2 = and((h<= eps), (h >= - eps));
-        phi = -ones(length(h)).*cond1 + (1/(4*eps))*h.* cond2;
+        dh = Xl(car_index) -  2 * X(car_index)- auxdata.l - auxdata.d_min - eps; 
+        cond1 = (dh< -eps);
+        cond2 = and((dh<= eps), (dh >= - eps));
+        phi = -ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2;
         idx = find(auxdata.Ia == car_index);
         dl(idx) = -phi; %%d phi/ dxi; 
         if ismembc(car_index-1, Ia)
@@ -153,7 +152,7 @@ end
 
 
 %%%%% Adjoint system %%%%%
-function PQ_dot = F_adjointdmax(t, i, PQ, X, V, U, A, auxdata)
+function PQ_dot = F_adjoint_max(t, i, PQ, X, V, U, A, auxdata)
     P = PQ(1:auxdata.len_platoon); %x multipliers 
     Q = [PQ(auxdata.len_platoon+1:end); 0]; %v multipliers 
     P_dot = zeros(length(P), 1);
@@ -166,27 +165,27 @@ function PQ_dot = F_adjointdmax(t, i, PQ, X, V, U, A, auxdata)
 
     %%%% Human vehicles (HV) %%%%
     %%%% dot(zeta) = -Ly + zeta fy
-    P_dot(auxdata.Ih) = phi_partialdmax(t, i, X, V, U, A, "xh", auxdata) ...
+    P_dot(auxdata.Ih) = phi_partial_max(t, i, X, V, U, A, "xh", auxdata) ...
         - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata) ...
         - Q(auxdata.Ih+1) .* ismembc(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
     
-    Q_dot(auxdata.Ih) = phi_partialdmax(t, i, X, V, U, A, "vh", auxdata) ...
+    Q_dot(auxdata.Ih) = phi_partial_max(t, i, X, V, U, A, "vh", auxdata) ...
         - P(auxdata.Ih) ...
         - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata)  ...
         - Q(auxdata.Ih+1) .* ismembc(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);
     
     %%%% Automated vehicles (AV) %%%%
-    P_dot(auxdata.Ia) = phi_partialdmax(t, i, X, V, U, A, "xa", auxdata) ...
+    P_dot(auxdata.Ia) = phi_partial_max(t, i, X, V, U, A, "xa", auxdata) ...
         - Q(auxdata.Ia+1) .* ismembc(auxdata.Ia+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "xl", auxdata);
     
-    Q_dot(auxdata.Ia) = phi_partialdmax(t, i, X, V, U, A, "va", auxdata) ...
+    Q_dot(auxdata.Ia) = phi_partial_max(t, i, X, V, U, A, "va", auxdata) ...
         - P(auxdata.Ia) ...
         - Q(auxdata.Ia+1) .* ismembc(auxdata.Ia+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ia), Xf(auxdata.Ia), V(auxdata.Ia), Vf(auxdata.Ia), "vl", auxdata);
     PQ_dot = [P_dot; Q_dot];
 end 
 
 %%%%% Partial derivatives of the running cost for dmax %%%%%
-function dl = phi_partialdmax(t, i, X, V, U, A, var, auxdata)
+function dl = phi_partial_max(t, i, X, V, U, A, var, auxdata)
     Ia = auxdata.Ia;
     Ih = auxdata.Ih;
     if var ~= "u"
@@ -201,28 +200,31 @@ function dl = phi_partialdmax(t, i, X, V, U, A, var, auxdata)
         dl = 0 * Ih; 
         if ismembc(car_index-1, Ih)
             eps = auxdata.eps; 
-            h = - 2 * Xl(car_index) +  X(car_index) + auxdata.l + auxdata.d_max - eps; 
-            cond1 = (h< -eps);
-            cond2 = and((h<= eps), (h >= - eps));
-            phi = ones(length(h)).*cond1 + (1/(4*eps))*h.* cond2;
-            dl(i-1) = -phi; %%d phi/ dxi-1; 
+            dh = - 2 * Xl(car_index) +  X(car_index) + auxdata.l + auxdata.d_max - eps; 
+            cond1 = (dh< -eps);
+            cond2 = and((dh<= eps), (dh >= - eps));
+            phi = ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2; % length of dh is 1
+            idx = find(auxdata.Ih == car_index-1);
+            dl(idx) = -phi; %%d phi/ dxi-1; 
         end
     elseif var == "xa"
         car_index = auxdata.Ia(i); % check this line
         dl = 0 * Ia; 
         eps = auxdata.eps;
-        h =  Xl(car_index) - 2 * X(car_index)- auxdata.l - auxdata.d_max + eps; 
-        cond1 = (h< -eps);
-        cond2 = and((h<= eps), (h >= - eps));
-        phi = -ones(length(h)).*cond1 + (1/(4*eps))*h.* cond2;
-        dl(i) = -phi; %%d phi/ dxi; 
+        dh =  Xl(car_index) - 2 * X(car_index)- auxdata.l - auxdata.d_max + eps; 
+        cond1 = (dh< -eps);
+        cond2 = and((dh<= eps), (dh >= - eps));
+        phi = -ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2;
+        idx = find(auxdata.Ia == car_index-1);
+        dl(idx) = -phi; %%d phi/ dxi-1; 
         if ismembc(car_index-1, Ia)
 %             eps = auxdata.eps; 
             dh = - 2 * Xl(car_index) +  X(car_index) + auxdata.l + auxdata.d_max - eps; 
             cond1 = (dh< -eps);
             cond2 = and((dh<= eps), (dh >= - eps));
             phi = ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2;
-            dl(i-1) = -phi; %%d phi/ dxi-1;
+            idx = find(auxdata.Ia == car_index-1);
+            dl(idx) = -phi; %%d phi/ dxi-1; 
         end
     elseif var == "vh"
         dl = 0 * Ih; 
