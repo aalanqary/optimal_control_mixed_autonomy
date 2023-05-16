@@ -48,10 +48,10 @@
     auxdata.f = -auxdata.e*auxdata.max_translation + auxdata.f;
 
 % const grad params
-    auxdata.eps = 0.1;
-    auxdata.gamma = 0.1;
+    auxdata.eps = 0.01;
+    auxdata.gamma = 0.01;
     auxdata.d_min = 2.5;
-    auxdata.d_max = 100000;
+    auxdata.d_max = 300;
 
 % Basic Leader traj
 %     

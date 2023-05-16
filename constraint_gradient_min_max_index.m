@@ -6,44 +6,38 @@ function [c, dc] = constraint_gradient_min_max_index(X, V, A, Fx, Fv, Fa, Fu, au
     cmax = Cmax(auxdata.Ia(i), X, V, A, auxdata);
     c = [cmin, cmax];
 
-
     % Gradient
-    if nargout >= 2
-        %PQ = ode3(@(t,PQ) F_adjoint_mod(P_dot, Q_dot, i, auxdata), flip(auxdata.time), PQ0);
-        PQ0 = get_adjoint_ic(X, V, U_vec, auxdata);
-        PQ = ode3(@(t,PQ) F_adjoint_min(t, i, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
-        PQ = flip(PQ,1);
-        Q = PQ(:, auxdata.len_platoon+1:end);
-        %P = PQ(:, 1:auxdata.len_platoon);
-        Q_short = griddedInterpolant(auxdata.time, Q);
-        Q_short = Q_short(auxdata.utime);
-        
-        % Lu - zeta fu
-        dc_min = Q_short(:, auxdata.Ia) + phi_partial_min(flip(auxdata.time), 0, [], [], U_vec, [],  "u", auxdata)'; 
-
-        PQ = ode3(@(t,PQ) F_adjoint_max(t, i, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
-        PQ = flip(PQ,1);
-        Q = PQ(:, auxdata.len_platoon+1:end);
-        %P = PQ(:, 1:auxdata.len_platoon);
-        Q_short = griddedInterpolant(auxdata.time, Q);
-        Q_short = Q_short(auxdata.utime);
-        
-        % Lu - zeta fu
-        dc_max = Q_short(:, auxdata.Ia) + phi_partial_max(flip(auxdata.time), 0, [], [], U_vec, [],  "u", auxdata)'; 
-        dc = [dc_min; dc_max];
-%         figure(4); 
-%         plot(dz)
-%         drawnow
-    end 
+     if nargout >= 2
+         %PQ = ode3(@(t,PQ) F_adjoint_mod(P_dot, Q_dot, i, auxdata), flip(auxdata.time), PQ0);
+         PQ0 = get_adjoint_ic(X, V, U_vec, auxdata);
+         PQ = ode3(@(t,PQ) F_adjoint_min(t, i, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
+         PQ = flip(PQ,1);
+         Q = PQ(:, auxdata.len_platoon+1:end);
+         %P = PQ(:, 1:auxdata.len_platoon);
+         Q_short = griddedInterpolant(auxdata.time, Q);
+         Q_short = Q_short(auxdata.utime);
+         
+         % Lu - zeta fu
+         dc_min = Q_short(:, auxdata.Ia) + phi_partial_min(flip(auxdata.time), 0, [], [], U_vec, [],  "u", auxdata)'; 
+ 
+         PQ = ode3(@(t,PQ) F_adjoint_max(t, i, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
+         PQ = flip(PQ,1);
+         Q = PQ(:, auxdata.len_platoon+1:end);
+         %P = PQ(:, 1:auxdata.len_platoon);
+         Q_short = griddedInterpolant(auxdata.time, Q);
+         Q_short = Q_short(auxdata.utime);
+         
+         % Lu - zeta fu
+         dc_max = Q_short(:, auxdata.Ia) + phi_partial_max(flip(auxdata.time), 0, [], [], U_vec, [],  "u", auxdata)'; 
+         dc = [dc_min; dc_max];
+     end 
  
 end 
 
 %%%%% constraint Function %%%%%
 function cmin = Cmin(i, X, V, A, auxdata)
-    % IMPLEMENT CONSTRAINTS 
     eps = auxdata.eps; 
     Xl = [auxdata.xl(auxdata.time), X]; 
-%     Xl = [auxdata.xl(auxdata.time), X];
     h = (Xl(:, i) - X(:, i) - auxdata.l) - auxdata.d_min; 
     cond1 = (h< -eps);
     cond2 = and((h<= eps), (h >= - eps));
@@ -52,10 +46,8 @@ function cmin = Cmin(i, X, V, A, auxdata)
 end 
 
 function cmax = Cmax(i, X, V, A, auxdata)
-    % IMPLEMENT CONSTRAINTS 
     eps = auxdata.eps; 
     Xl = [auxdata.xl(auxdata.time), X]; 
-%     Xl = [auxdata.xl(auxdata.time), X];
     h =  auxdata.d_max - (Xl(:, i) - X(:, i) - auxdata.l);
     cond1 = (h< -eps);
     cond2 = and((h<= eps), (h >= - eps));
@@ -218,7 +210,6 @@ function dl = phi_partial_max(t, i, X, V, U, A, var, auxdata)
         idx = find(auxdata.Ia == car_index-1);
         dl(idx) = -phi; %%d phi/ dxi-1; 
         if ismembc(car_index-1, Ia)
-%             eps = auxdata.eps; 
             dh = - 2 * Xl(car_index) +  X(car_index) + auxdata.l + auxdata.d_max - eps; 
             cond1 = (dh< -eps);
             cond2 = and((dh<= eps), (dh >= - eps));
