@@ -12,8 +12,8 @@ auxdata.N_state = 100;
 auxdata.h = auxdata.T/auxdata.N;
 auxdata.tau = linspace(0, auxdata.T, auxdata.N);
 % Specify constraints params
-auxdata.eps = 0;
-auxdata.gamma = 0;
+auxdata.eps = 0.01;
+auxdata.gamma = 0.1;
 
 z = auxdata.k0 * ones(1, auxdata.N); %column vector
 z = sin(auxdata.tau);
