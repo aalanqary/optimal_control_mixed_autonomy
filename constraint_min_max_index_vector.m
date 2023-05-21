@@ -1,10 +1,11 @@
-function [c] = constraint_gradient_min_max_index_vector(X, V, A, Fx, Fv, Fa, Fu, auxdata, i, U_vec)
+function [c] = constraint_min_max_index_vector(X, V, A, Fx, Fv, Fa, Fu, auxdata, i, U_vec)
     
     % Objective 
 %     [X, V, A] = system_solve(U_vec, auxdata);
-    cmin = Cminvector(auxdata.Ia(i), X, V, A, auxdata);
-    cmax = Cmaxvector(auxdata.Ia(i), X, V, A, auxdata);
-    c = [cmin; cmax];
+    cmin = Cmin(auxdata.Ia(i), X, V, A, auxdata);
+    cmax = Cmax(auxdata.Ia(i), X, V, A, auxdata);
+    c = [cmin, cmax];
+
 
 %     % Gradient
 %      if nargout >= 2
@@ -35,24 +36,24 @@ function [c] = constraint_gradient_min_max_index_vector(X, V, A, Fx, Fv, Fa, Fu,
 end 
 
 %%%%% constraint Function %%%%%
-function cmin = Cminvector(i, X, V, A, auxdata)
+function cmin = Cmin(i, X, V, A, auxdata)
     eps = auxdata.eps; 
     Xl = [auxdata.xl(auxdata.time), X]; 
     h = (Xl(:, i) - X(:, i) - auxdata.l) - auxdata.d_min; 
     cond1 = (h< -eps);
     cond2 = and((h<= eps), (h >= - eps));
     c = h.*cond1 + - (1/(4*eps))* (h - eps).^2 .* cond2;
-    cmin = -auxdata.gamma - c; 
+    cmin = -auxdata.gamma - trapz(auxdata.time, c); 
 end 
 
-function cmax = Cmaxvector(i, X, V, A, auxdata)
+function cmax = Cmax(i, X, V, A, auxdata)
     eps = auxdata.eps; 
     Xl = [auxdata.xl(auxdata.time), X]; 
     h =  auxdata.d_max - (Xl(:, i) - X(:, i) - auxdata.l);
     cond1 = (h< -eps);
     cond2 = and((h<= eps), (h >= - eps));
     c = h.*cond1 + - (1/(4*eps))* (h - eps).^2 .* cond2;
-    cmax = -auxdata.gamma - c; 
+    cmax = -auxdata.gamma - trapz(auxdata.time, c); 
 end 
 
 
