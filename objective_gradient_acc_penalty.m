@@ -42,10 +42,11 @@ function j = J(X, V, A, auxdata)
         + auxdata.mu3 * 0.1 * sum(auxdata.d.*(atan(auxdata.e.*(h) + auxdata.f) + pi/2), "all"); 
     terminal_cost = 0; %-sum(X(end, :));
     j = running_cost + terminal_cost;
-      figure(3)  
-      plot(Vl)
-      legend('v1', 'v2', 'v3', 'v4', 'v5');
-    title("Velocity")
+    %       figure(3)  
+    %       plot(Vl)
+    %       legend('v1', 'v2', 'v3', 'v4', 'v5');
+    %     title("Velocity")
+
 %     drawnow;
 %     display(auxdata.iter)
 %     if mod(auxdata.iter,5) == 0
@@ -55,18 +56,20 @@ function j = J(X, V, A, auxdata)
 %          drawnow;
 %     end
 %     auxdata.iter = auxdata.iter + 1;
-      figure(6)
-      plot(A)
-      title("Acceleration, Objective = ", j)
-%     drawnow;
+
+    %       figure(6)
+    %       plot(A)
+    %       title("Acceleration, Objective = ", j)
+    %     drawnow;
+
 %     penalty2 = auxdata.mu2 .* auxdata.a.*(-atan(auxdata.b.*h + auxdata.c) + pi/2);
 %     penalty3 = auxdata.mu3 * auxdata.d.*(atan(auxdata.e.*h + auxdata.f) + pi/2);
-      figure(4)
-      plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
-      title("AV Headway leader first AV")
-      figure(5)
-      plot(Xl(:, 3) - Xl(:, 4) - auxdata.l)
-      title("AV Headway second AV")
+    %       figure(4)
+    %       plot(Xl(:, 1) - Xl(:, 2) - auxdata.l)
+    %       title("AV Headway leader first AV")
+    %       figure(5)
+    %       plot(Xl(:, 3) - Xl(:, 4) - auxdata.l)
+    %       title("AV Headway second AV")
 %     figure(4)
 %     plot(penalty2)
 %     title("Penalty 2")

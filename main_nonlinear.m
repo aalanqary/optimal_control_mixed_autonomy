@@ -51,7 +51,7 @@
     auxdata.eps = 0.01;
     auxdata.gamma = 0.01;
     auxdata.d_min = 2.5;
-    auxdata.d_max = 300;
+    auxdata.d_max = 400;
 
 % Basic Leader traj
 %     

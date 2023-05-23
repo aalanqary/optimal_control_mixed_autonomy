@@ -101,15 +101,17 @@ function dl = phi_partial_min(t, i, X, V, U, A, var, auxdata)
         Vf = [V(2:end); 0]; 
         Af = [A(2:end); 0]; 
     end
+  
     if var == "xh" 
         car_index = auxdata.Ia(i); % check this line
         dl = 0 * Ih; 
         if ismembc(car_index-1, Ih)
             eps = auxdata.eps; 
-            dh = - 2 * Xl(car_index) + X(car_index) + auxdata.l + auxdata.d_min + eps; 
+            dh = Xl(car_index) - X(car_index) - auxdata.l - auxdata.d_min - auxdata.eps;
+            dh = 2*dh*1;
             cond1 = (dh< -eps);
             cond2 = and((dh<= eps), (dh >= - eps));
-            phi = ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2; % length of dh is 1
+            phi = ones(length(dh)).*cond1 + (-1/(4*eps))*dh.* cond2; % length of dh is 1
             idx = find(auxdata.Ih == car_index-1);
             dl(idx) = -phi; %%d phi/ dxi-1; 
         end
@@ -117,18 +119,20 @@ function dl = phi_partial_min(t, i, X, V, U, A, var, auxdata)
         car_index = auxdata.Ia(i); % check this line
         dl = 0 * Ia; 
         eps = auxdata.eps;
-        dh = Xl(car_index) -  2 * X(car_index)- auxdata.l - auxdata.d_min - eps; 
+        dh = Xl(car_index) - X(car_index) - auxdata.l - auxdata.d_min - auxdata.eps;
+        dh = 2*dh*-1;
         cond1 = (dh< -eps);
         cond2 = and((dh<= eps), (dh >= - eps));
-        phi = -ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2;
+        phi = -ones(length(dh)).*cond1 + (-1/(4*eps))*dh.* cond2;
         idx = find(auxdata.Ia == car_index);
         dl(idx) = -phi; %%d phi/ dxi; 
         if ismembc(car_index-1, Ia)
             eps = auxdata.eps; 
-            dh = - 2 * Xl(car_index) + X(car_index) + auxdata.l + auxdata.d_min + eps;
+            dh = Xl(car_index) - X(car_index) - auxdata.l - auxdata.d_min - auxdata.eps;
+            dh = 2*dh*1;
             cond1 = (dh< -eps);
             cond2 = and((dh<= eps), (dh >= - eps));
-            phi = ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2; % flips cond1
+            phi = ones(length(dh)).*cond1 + (-1/(4*eps))*dh.* cond2; % flips cond1
             idx = find(auxdata.Ia == car_index - 1);
             dl(idx) = -phi; %%d phi/ dxi; 
         end
@@ -192,10 +196,11 @@ function dl = phi_partial_max(t, i, X, V, U, A, var, auxdata)
         dl = 0 * Ih; 
         if ismembc(car_index-1, Ih)
             eps = auxdata.eps; 
-            dh = - 2 * Xl(car_index) +  X(car_index) + auxdata.l + auxdata.d_max - eps; 
+            dh = auxdata.d_max - Xl(car_index) + X(car_index) + auxdata.l - auxdata.eps;
+            dh = 2*dh*-1;
             cond1 = (dh< -eps);
             cond2 = and((dh<= eps), (dh >= - eps));
-            phi = -ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2; % length of dh is 1
+            phi = -ones(length(dh)).*cond1 + (-1/(4*eps))*dh.* cond2; % length of dh is 1
             idx = find(auxdata.Ih == car_index-1);
             dl(idx) = -phi; %%d phi/ dxi-1; 
         end
@@ -203,17 +208,19 @@ function dl = phi_partial_max(t, i, X, V, U, A, var, auxdata)
         car_index = auxdata.Ia(i); % check this line
         dl = 0 * Ia; 
         eps = auxdata.eps;
-        dh =  Xl(car_index) - 2 * X(car_index)- auxdata.l - auxdata.d_max + eps; 
+        dh = auxdata.d_max - Xl(car_index) + X(car_index) + auxdata.l - auxdata.eps;
+        dh = 2*dh*1;
         cond1 = (dh< -eps);
         cond2 = and((dh<= eps), (dh >= - eps));
-        phi = ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2;
+        phi = ones(length(dh)).*cond1 + (-1/(4*eps))*dh.* cond2;
         idx = find(auxdata.Ia == car_index-1);
         dl(idx) = -phi; %%d phi/ dxi-1; 
         if ismembc(car_index-1, Ia)
-            dh = - 2 * Xl(car_index) +  X(car_index) + auxdata.l + auxdata.d_max - eps; 
+            dh = auxdata.d_max - Xl(car_index) + X(car_index) + auxdata.l - auxdata.eps;
+            dh = 2*dh*-1;
             cond1 = (dh< -eps);
             cond2 = and((dh<= eps), (dh >= - eps));
-            phi = -ones(length(dh)).*cond1 + (1/(4*eps))*dh.* cond2;
+            phi = -ones(length(dh)).*cond1 + (-1/(4*eps))*dh.* cond2;
             idx = find(auxdata.Ia == car_index-1);
             dl(idx) = -phi; %%d phi/ dxi-1; 
         end

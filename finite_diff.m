@@ -4,7 +4,7 @@ function [c_shift, c, diff_vec, total_diff] = finite_diff(U, h, auxdata)
     dc_all = zeros(2*utimelength, unum*unum);
     c_all = zeros(unum * 2, 1); 
     for i = 1:length(auxdata.Ia)
-        [ci, dci] = constraint_min_max_index_vector(X, V, A, Fx, Fv, Fa, Fu, auxdata, i, U);
+        [ci, dci] = constraint_gradient_min_max_index(X, V, A, Fx, Fv, Fa, Fu, auxdata, i, U);
         c_all(2*i-1:2*i) = ci;
         dc_all(:, 2*i-1:2*i) = dci;
     end
@@ -14,11 +14,11 @@ function [c_shift, c, diff_vec, total_diff] = finite_diff(U, h, auxdata)
     for i = 1:utimelength
         U_shift = U;
         U_shift(i, 1) = U(i, 1) + h;
-        [X, V, A, Fx, Fv, Fa, Fu] = constraint_min_max_index_vector(U_shift, auxdata);
+        [X, V, A, Fx, Fv, Fa, Fu] = constraint_gradient_min_computation(U_shift, auxdata);
         [timelength, num] = size(V);
         c_all = zeros(unum * 2, 1); 
         for j = 1:length(auxdata.Ia)
-            [ci] = constraint_gradient_min_max_index_vector(X, V, A, Fx, Fv, Fa, Fu, auxdata, j, U_shift);
+            [ci] = constraint_min_max_index_vector(X, V, A, Fx, Fv, Fa, Fu, auxdata, j, U_shift);
             c_all(2*j-1:2*j) = ci;
         end
         c_shift = c_all;
@@ -32,7 +32,7 @@ function [c_shift, c, diff_vec, total_diff] = finite_diff(U, h, auxdata)
         [timelength, num] = size(V);
         c_all = zeros(unum * 2, 1); 
         for j = 1:length(auxdata.Ia)
-            [ci] = constraint_gradient_min_max_index_vector(X, V, A, Fx, Fv, Fa, Fu, auxdata, j, U_shift);
+            [ci] = constraint_min_max_index_vector(X, V, A, Fx, Fv, Fa, Fu, auxdata, j, U_shift);
             c_all(2*j-1:2*j) = ci;
         end
         c_shift = c_all;
