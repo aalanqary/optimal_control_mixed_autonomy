@@ -3,7 +3,6 @@ function [z, dz] = objective_gradient_acc_penalty(U_vec, auxdata)
     % Objective 
     [X, V, A] = generic_system_solve(U_vec, auxdata);
     z = J(X, V, A, auxdata);
-
     
     % Gradient
     if nargout >= 2
@@ -43,7 +42,6 @@ function j = J(X, V, A, auxdata)
         + auxdata.mu3 * 0.1 * sum(auxdata.d.*(atan(auxdata.e.*(h) + auxdata.f) + pi/2), "all"); 
     terminal_cost = 0; %-sum(X(end, :));
     j = running_cost + terminal_cost;
-    %display("Objective = " + j);
     %       figure(3)  
     %       plot(Vl)
     %       legend('v1', 'v2', 'v3', 'v4', 'v5');

@@ -19,7 +19,7 @@ function [c, dc] = constraint_gradient_min_max_index(X, V, A, Fx, Fv, Fa, Fu, au
          
          % Lu - zeta fu
          dc_min = Q_short(:, auxdata.Ia) + phi_partial_min(flip(auxdata.time), 0, [], [], U_vec, [],  "u", auxdata)'; 
- 
+         
          PQ = ode3(@(t,PQ) F_adjoint_max(t, i, PQ, Fx(t)', Fv(t)', Fu(t)',Fa(t)', auxdata), flip(auxdata.time), PQ0);
          PQ = flip(PQ,1);
          Q = PQ(:, auxdata.len_platoon+1:end);
@@ -29,7 +29,9 @@ function [c, dc] = constraint_gradient_min_max_index(X, V, A, Fx, Fv, Fa, Fu, au
          
          % Lu - zeta fu
          dc_max = Q_short(:, auxdata.Ia) + phi_partial_max(flip(auxdata.time), 0, [], [], U_vec, [],  "u", auxdata)'; 
-         dc = [dc_min; dc_max];
+         min_reshape = reshape(dc_min.', [], 1); % instead of m columns for num of AVs, it makes it to one column, stacking them up
+         max_reshape = reshape(dc_max.', [], 1);
+         dc = [min_reshape, max_reshape];
      end 
  
 end 
@@ -41,7 +43,7 @@ function cmin = Cmin(i, X, V, A, auxdata)
     h = (Xl(:, i) - X(:, i) - auxdata.l) - auxdata.d_min; 
     cond1 = (h< -eps);
     cond2 = and((h<= eps), (h >= - eps));
-    c = h.*cond1 + - (1/(4*eps))* (h - eps).^2 .* cond2;
+    c = h.*cond1 + (-1/(4*eps))* (h - eps).^2 .* cond2;
     cmin = -auxdata.gamma - trapz(auxdata.time, c); 
 end 
 
@@ -51,7 +53,7 @@ function cmax = Cmax(i, X, V, A, auxdata)
     h =  auxdata.d_max - (Xl(:, i) - X(:, i) - auxdata.l);
     cond1 = (h< -eps);
     cond2 = and((h<= eps), (h >= - eps));
-    c = h.*cond1 + - (1/(4*eps))* (h - eps).^2 .* cond2;
+    c = h.*cond1 + (-1/(4*eps))* (h - eps).^2 .* cond2;
     cmax = -auxdata.gamma - trapz(auxdata.time, c); 
 end 
 
