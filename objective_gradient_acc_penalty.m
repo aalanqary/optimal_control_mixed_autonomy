@@ -38,9 +38,9 @@ function j = J(X, V, A, auxdata)
     % arctan new barrier function (a(-arctan(bx+c)+pi/2) might have to use
     % sym(pi)
 %     auxdata.mu2_tmp = 1./(1+exp(-auxdata.iter+2));
-    running_cost = auxdata.mu1 * 0.1 * sum(A.^2, "all") ...
-        + auxdata.mu2 * 0.1 * sum(auxdata.a.*(-atan(auxdata.b.*(h) + auxdata.c) + pi/2), "all") ...
-        + auxdata.mu3 * 0.1 * sum(auxdata.d.*(atan(auxdata.e.*(h) + auxdata.f) + pi/2), "all"); 
+    running_cost = auxdata.mu1 * sum(A.^2, "all") ...
+        + auxdata.mu2 * sum(auxdata.a.*(-atan(auxdata.b.*(h) + auxdata.c) + pi/2), "all") ...
+        + auxdata.mu3 * sum(auxdata.d.*(atan(auxdata.e.*(h) + auxdata.f) + pi/2), "all"); 
     terminal_cost = 0; %-sum(X(end, :));
     j = running_cost + terminal_cost;
     %display("Objective = " + j);
@@ -150,7 +150,7 @@ function dl = L_partial(t, X, V, U, A, var, auxdata)
         elseif var == "vh"
             dl = 2 * A(Ih) .* ACC_partial(Xl(Ih), X(Ih), Vl(Ih), V(Ih), "v", auxdata) ...
             + 2 * ismembc(Ih+1, Ih)' .* Af(Ih) .* ACC_partial(X(Ih), Xf(Ih), V(Ih), Vf(Ih), "vl", auxdata);
-          
+            
         elseif var == "va"
             dl = 2 * ismembc(Ia+1, Ih)' .* Af(Ia) .* ACC_partial(X(Ia), Xf(Ia), V(Ia), Vf(Ia), "vl", auxdata);
 

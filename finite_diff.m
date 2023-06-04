@@ -1,4 +1,4 @@
-function [dc, diff_vec, total_diff] = finite_diff(U, h, auxdata)
+function [dc, diff_vec] = finite_diff(U, h, auxdata)
     [X, V, A, Fx, Fv, Fa, Fu] = constraint_gradient_min_computation(U, auxdata);
     [utimelength, unum] = size(U);
     dc_all = zeros(unum*utimelength, 2*unum);

@@ -100,8 +100,10 @@ function dl = L_partial(t, X, V, U, A, var, auxdata)
     if var == "xh" 
         dl = 2 * A(Ih) .* ACC_partial(Xl(Ih), X(Ih), Vl(Ih), V(Ih), "x", auxdata) ...
             + ismembc(Ih+1, Ih)' * 2 .* Af(Ih) .* ACC_partial(X(Ih), Xf(Ih), V(Ih), Vf(Ih), "xl", auxdata);
+        dl = auxdata.mu1 .* dl;
     elseif var == "xa"
         dl = 2 * ismembc(Ia+1, Ih)' .* Af(Ia) .* ACC_partial(X(Ia), Xf(Ia), V(Ia), Vf(Ia), "xl", auxdata);
+        dl = auxdata.mu1 .* dl;
     elseif var == "vh"
         dl = 2 * A(Ih) .* ACC_partial(Xl(Ih), X(Ih), Vl(Ih), V(Ih), "v", auxdata) ...
             + 2 * ismembc(Ih+1, Ih)' .* Af(Ih) .* ACC_partial(X(Ih), Xf(Ih), V(Ih), Vf(Ih), "vl", auxdata);

@@ -1,7 +1,7 @@
 %% Define problem 
 
 % Platoon params
-    auxdata.platoon = [1, 1, 1];
+    auxdata.platoon = [1, 1, 1, 1];
     auxdata.len_platoon = length(auxdata.platoon);
     auxdata.Ia = find(auxdata.platoon);
     auxdata.Ih = find(auxdata.platoon - 1);
@@ -12,7 +12,7 @@
     auxdata.alpha = 0.1;
     auxdata.beta = 21*25;
     auxdata.k = 0.2;
-    auxdata.l = 5; 
+    auxdata.l = 5;
 
 % Optimized Bando-FtL params
 %     auxdata.safe_dist = 3.92988471e+01; 
@@ -23,7 +23,7 @@
 %     auxdata.l = 5; 
 
 % objective function params
-    auxdata.mu1 = 1;
+    auxdata.mu1 = 1000;
     auxdata.mu2 = 0;
     auxdata.mu3 = 0;
 
@@ -48,10 +48,10 @@
     auxdata.f = -auxdata.e*auxdata.max_translation + auxdata.f;
 
 % const grad params
-    auxdata.eps = 0.01;
-    auxdata.gamma = 0.01;
+    auxdata.eps = 0.1;
+    auxdata.gamma = 0.1;
     auxdata.d_min = 2.5;
-    auxdata.d_max = 400;
+    auxdata.d_max = 300;
 
 % Basic Leader traj
 %     
@@ -126,13 +126,14 @@ options = optimoptions('fmincon','Display','iter-detailed', ...
                         'SpecifyObjectiveGradient', true ,...
                         'SpecifyConstraintGradient',true, ...
                         'GradConstr', 'on',...
-                        'FunValCheck','on', 'DerivativeCheck', 'off',...
+                        'CheckGradients',false,...
+                        'FunValCheck','off', 'DerivativeCheck', 'off',...
                         'maxfunevals',1e6, 'StepTolerance',1e-8, ...
                         'algorithm', 'sqp', ...
                         'ConstraintTolerance', 1e-10);
 
 nonlcon = @(U) nonlcon_const_max(U, auxdata);
-fun = @(U) objective_gradient_acc_penalty(U, auxdata); 
+fun = @(U) objective_gradient_acc(U, auxdata); 
 % nonlcon = []; %@(U) nlc(U, auxdata);
 A = [];
 b = [];
