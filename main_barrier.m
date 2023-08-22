@@ -1,7 +1,7 @@
 %% Define problem 
 
 % Platoon params
-    auxdata.platoon = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0];
+    auxdata.platoon = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0];
     auxdata.len_platoon = length(auxdata.platoon);
     auxdata.Ia = find(auxdata.platoon);
     auxdata.Ih = find(auxdata.platoon - 1);
@@ -28,8 +28,8 @@ auxdata.d_max = 120;
 
 % objective function params
     auxdata.mu1 = 1;
-    auxdata.mu2 = 0.04;
-    auxdata.mu3 = 0.01;
+    auxdata.mu2 = 0.0027;
+    auxdata.mu3 = 0.0001;
 
 % Energy function +
 %     load(['RAV4_coeffs.mat']);
@@ -38,12 +38,13 @@ auxdata.d_max = 120;
 %     auxdata.q = [double(q0), q1];
 
 %Arctan Barrier auxdata (a(-arctan(bx+c)+pi/2)
-    auxdata.a = 1;
-    auxdata.b = 40;
-    auxdata.c_init = 0.6;
+    auxdata.a = 100;
+    auxdata.b = 1000;
+    %auxdata.c_init = 0.6;
     %auxdata.min_translation = 3.5;
-    auxdata.min_translation = 4.05;
-    auxdata.c = -auxdata.b*auxdata.min_translation + auxdata.c_init;
+    %auxdata.min_translation = 4.05;
+    %auxdata.c = -auxdata.b*auxdata.min_translation + auxdata.c_init;
+    auxdata.c = -4000;
 
 %Arctan max velocity auxdata (a(-arctan(bx+c)+pi/2))
 %     auxdata.d = 1;
@@ -52,29 +53,35 @@ auxdata.d_max = 120;
 %     auxdata.max_translation = 300;
 %     auxdata.f = -auxdata.e*auxdata.max_translation + auxdata.f_init;
 
-    auxdata.d = 1;
-    auxdata.e = 10;
-    auxdata.f_init = 0;
-    auxdata.max_translation = 119.5;
-    auxdata.f = -auxdata.e*auxdata.max_translation + auxdata.f_init;
+%     auxdata.d = 1;
+%     auxdata.e = 10;
+%     auxdata.f_init = 0;
+%     auxdata.max_translation = 119.5;
+%     auxdata.f = -auxdata.e*auxdata.max_translation + auxdata.f_init;
+
+    auxdata.d = 100;
+    auxdata.e = 100;
+%     auxdata.f_init = 0;
+%     auxdata.max_translation = 119.5;
+    auxdata.f = -12000;
 
 
-%Simple leader traj
-    T = 250; 
-    auxdata.dt = 0.1;
-    auxdata.udt = 1; 
-    auxdata.utime = (0:auxdata.udt:T)';
-    auxdata.time = (0:auxdata.dt:T)';
-    
-    vl = @(t) (t<=80) .* 30 ...
-                + (((t>80) + (t<= 120)) ==2) .* (-t./8 + 40) ...
-                + (((t>120) + (t<= 150)) ==2) .* 25 ...
-                + (((t>150) + (t<= 190)) ==2) .* (t./8 + 25/4) ...
-                + (t>190) .* 30;
-    vl = vl(auxdata.time); 
-    vl = smoothdata(vl, "movmean", 50);
-    auxdata.vl = griddedInterpolant(auxdata.time, vl);
-    auxdata.leader_traj = "simple";
+% %Simple leader traj
+%     T = 250; 
+%     auxdata.dt = 0.1;
+%     auxdata.udt = 1; 
+%     auxdata.utime = (0:auxdata.udt:T)';
+%     auxdata.time = (0:auxdata.dt:T)';
+%     
+%     vl = @(t) (t<=80) .* 30 ...
+%                 + (((t>80) + (t<= 120)) ==2) .* (-t./8 + 40) ...
+%                 + (((t>120) + (t<= 150)) ==2) .* 25 ...
+%                 + (((t>150) + (t<= 190)) ==2) .* (t./8 + 25/4) ...
+%                 + (t>190) .* 30;
+%     vl = vl(auxdata.time); 
+%     vl = smoothdata(vl, "movmean", 50);
+%     auxdata.vl = griddedInterpolant(auxdata.time, vl);
+%     auxdata.leader_traj = "simple";
 
 %Sinusoidal leader traj
 %     T = 250; 
@@ -86,18 +93,18 @@ auxdata.d_max = 120;
 %     auxdata.vl = @(t) sin(0.1*t) + cos(0.05*t)  - t/100 + 32;
 %     auxdata.leader_traj = "sinusoidal";
 
-% %Real leader traj
-%     T = 704; 
-%     auxdata.dt = 0.1;
-%     auxdata.udt = 1; 
-%     auxdata.utime = (0:auxdata.udt:T)';
-%     auxdata.time = (0:auxdata.dt:T)';
-%     
-%     data = readtable("data_v2_preprocessed_west/2021-04-22-12-47-13_2T3MWRFVXLW056972_masterArray_0_7050.csv");
-%     vl = data.Velocity * (1000/3600); 
-%     vl = smoothdata(vl,'movmean',200);
-%     auxdata.vl = griddedInterpolant(auxdata.time,vl(1:length(auxdata.time)));
-%     auxdata.leader_traj = "real";
+%Real leader traj
+    T = 704; 
+    auxdata.dt = 0.1;
+    auxdata.udt = 1; 
+    auxdata.utime = (0:auxdata.udt:T)';
+    auxdata.time = (0:auxdata.dt:T)';
+    
+    data = readtable("data_v2_preprocessed_west/2021-04-22-12-47-13_2T3MWRFVXLW056972_masterArray_0_7050.csv");
+    vl = data.Velocity * (1000/3600); 
+    vl = smoothdata(vl,'movmean',200);
+    auxdata.vl = griddedInterpolant(auxdata.time,vl(1:length(auxdata.time)));
+    auxdata.leader_traj = "real";
 
 % Initial conditions and leader position 
     eq = round(eq_headway(auxdata.vl(0), auxdata), 5);
@@ -112,9 +119,13 @@ auxdata.d_max = 120;
     auxdata.xl = griddedInterpolant(auxdata.time, xl);
 
 %Initial Guess U0  
-    U0 = diff(auxdata.vl(auxdata.utime)) ./ auxdata.udt;
-    U0 = [U0;0];
-    U0 = repmat(U0, [1, length(auxdata.Ia)]);
+%     U0 = diff(auxdata.vl(auxdata.utime)) ./ auxdata.udt;
+%     U0 = [U0;0];
+%     U0 = repmat(U0, [1, length(auxdata.Ia)]);
+
+% Input custom initial guess
+    load("results_mixed_platoon/" + auxdata.leader_traj+ "/" + string(auxdata.len_platoon) + "V/" + string(strjoin(string(auxdata.platoon))) + "_params8(big_barrier, part2).mat","U_star");
+    U0 = U_star
     [X0, V0, A0] = generic_system_solve(U0, auxdata);
 
 %% Run Optimizaer 
@@ -122,7 +133,7 @@ auxdata.d_max = 120;
 options = optimoptions('fmincon','Display','iter-detailed', ...
                         'SpecifyObjectiveGradient', true ,...
                         'FunValCheck','on', 'DerivativeCheck', 'off',...
-                        'maxfunevals',1e6, 'StepTolerance',1e-6, ...
+                        'maxfunevals',1e6, 'StepTolerance',1e-7, ...
                         'algorithm', 'sqp', ...
                         'ConstraintTolerance', 1e-10);
 
@@ -139,5 +150,5 @@ tic
 [U_star, f_val, ~, output, ~, grad] = fmincon(fun, U0, A, b, Aeq, beq, a_min, a_max, nonlcon, options);
 [X_star, V_star, A_star] = generic_system_solve(U_star, auxdata);
 toc
-save("results_mixed_platoon/" + auxdata.leader_traj+ "/" + string(auxdata.len_platoon) + "V/" + string(strjoin(string(auxdata.platoon))) + "_params3.mat");
+save("results_mixed_platoon/" + auxdata.leader_traj+ "/" + string(auxdata.len_platoon) + "V/" + string(strjoin(string(auxdata.platoon))) + "_params8(big_barrier, part4).mat");
 

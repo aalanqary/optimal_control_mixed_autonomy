@@ -44,6 +44,7 @@ ylabel("Acceleration (m/s^2)")
 figure()
 xl = auxdata.xl(auxdata.time);
 plot(auxdata.time, xl - X0(:, 1) - auxdata.l, "color", '#EE220C', "linewidth", 1)
+
 hold on 
 plot(auxdata.time, auxdata.d_min * V0, "color", 'black', "linewidth", 0.5, "LineStyle", "--")
 % plot(auxdata.time, xl - X0(:, 1) - auxdata.l, "color", '#EE220C', "linewidth", 1)
