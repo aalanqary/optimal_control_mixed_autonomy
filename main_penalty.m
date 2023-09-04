@@ -20,7 +20,7 @@ end
 %% get initial guess
 platoon = [1];
 results_in = "results/real_traj/init" + init + "/";
-save_res = false;
+save_res = true;
 [auxdata, leader] = problem_auxdata(platoon, const, traj);
 U_initial = diff(smoothdata(leader.v(auxdata.utime), 'movmean', 3)) ./ diff(auxdata.utime);
 U_initial = [U_initial;0] + 0.00001;

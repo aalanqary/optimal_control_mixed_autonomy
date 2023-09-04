@@ -1,7 +1,9 @@
-function [auxdata, leader] = problem_auxdata(platoon, constraints, leader_type)
+function [auxdata, leader] = problem_auxdata(platoon, constraints, leader_type, leader_trajectory)
 %     platoon: list of 1 and 0 representing locations of the AV and HV
 %     constraints: type of problem in terms of dealing with constraints
 %     leader_type: the name of the leader trajectory ["simple", "sin", "real"]
+%     leader_trajectory: Path of data for leader trajectory used from a
+%     previous run
 
     %Platoon configeration
     auxdata.platoon = platoon;
@@ -73,19 +75,35 @@ function [auxdata, leader] = problem_auxdata(platoon, constraints, leader_type)
         auxdata.utime = (0:auxdata.udt:T)';
         auxdata.time = (0:auxdata.dt:T)';
         
-        data = readtable("data_v2_preprocessed_west/2021-04-22-12-47-13_2T3MWRFVXLW056972_masterArray_0_7050.csv");
-        vl = data.Velocity * (1000/3600); 
-        vl = smoothdata(vl,'movmean',200);
-        leader.v = griddedInterpolant(data.Time - min(data.Time),vl);
+        if leader_trajectory == ""
+            data = readtable("data_v2_preprocessed_west/2021-04-22-12-47-13_2T3MWRFVXLW056972_masterArray_0_7050.csv");
+            vl = data.Velocity * (1000/3600); 
+            vl = smoothdata(vl,'movmean',200);
+            leader.v = griddedInterpolant(data.Time - min(data.Time),vl);
+        end
     end 
-    eq = round(eq_headway(leader.v(0), auxdata), 5);
-    x0 = (eq+auxdata.l) * flip(0:1:auxdata.len_platoon)';
-    auxdata.v0 = ones(auxdata.len_platoon, 1) * leader.v(0); 
-    opts = odeset('RelTol',1e-10,'AbsTol',1e-12);
-    [~, xl] = ode45(@(t,x) leader.v(t), auxdata.time, 0, opts);
-    xl = xl + x0(1);
-    auxdata.x0 = x0(2:end);
-    leader.x = griddedInterpolant(auxdata.time, xl);
+    if leader_trajectory == ""
+        eq = round(eq_headway(leader.v(0), auxdata), 5);
+        x0 = (eq+auxdata.l) * flip(0:1:auxdata.len_platoon)';
+        auxdata.v0 = ones(auxdata.len_platoon, 1) * leader.v(0); 
+        opts = odeset('RelTol',1e-10,'AbsTol',1e-12);
+        [~, xl] = ode45(@(t,x) leader.v(t), auxdata.time, 0, opts);
+        xl = xl + x0(1);
+        auxdata.x0 = x0(2:end);
+        leader.x = griddedInterpolant(auxdata.time, xl);
+    else
+        load(leader_trajectory, "X_star")
+        load(leader_trajectory, "V_star")
+        load(leader_trajectory, "A_star")
+        leader.v = griddedInterpolant(auxdata.time, V_star(:, end));
+        xl = X_star(:, end);
+        eq = round(eq_headway(leader.v(0), auxdata), 5);
+        x0 = (eq+auxdata.l) * flip(0:1:auxdata.len_platoon)';
+        auxdata.v0 = ones(auxdata.len_platoon, 1) * leader.v(0);
+        xl = xl + x0(1);
+        auxdata.x0 = x0(2:end);
+        leader.x = griddedInterpolant(auxdata.time, xl);
+    end
 end 
 
 function h = eq_headway(v, auxdata)
