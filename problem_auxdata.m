@@ -23,7 +23,7 @@ function [auxdata, leader] = problem_auxdata(platoon, constraints, leader_type)
     if constraints == "linear"
         auxdata.h_min = 0.5; %time headway  
         auxdata.h_max = 3; %time headway 
-    elseif constraints == "penalty_minmax"
+    elseif constraints == "penalty_minmax" | constraints == "greedy"
         auxdata.d_min = 5;
         auxdata.d_max = 120;
         auxdata.mu_min = 1e-1; 
