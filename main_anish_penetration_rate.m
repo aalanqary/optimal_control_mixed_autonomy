@@ -363,7 +363,6 @@ function results_dir = run_platoon(platoon, prev_results_in)
                     load("results/real_traj/init1/U_1av.mat")
                     U0 = [U_star, U_1av];
                 end
-                disp(U0)
     %         elseif init == 2
     %             load("results/real_traj/init1/3av_3hv_1/U_10.mat")
     %             load("results/real_traj/init1/U_1av.mat")
