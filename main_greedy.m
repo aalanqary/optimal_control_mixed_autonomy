@@ -24,7 +24,7 @@ save_res = true;
 [auxdata, leader] = problem_auxdata(platoon, const, traj);
 U_initial = diff(smoothdata(leader.v(auxdata.utime), 'movmean', 3)) ./ diff(auxdata.utime);
 U_initial = [U_initial;0] + 0.00001;
-fun = @(U) objective_gradient_accel_penalty(U, auxdata, leader); 
+fun = @(U) objective_gradient_accel_greedy(U, auxdata, leader); 
 nonlcon = []; 
 % [A, b] = lc_v(auxdata); 
 A = []; 
@@ -70,12 +70,12 @@ display("objective value = " + trapz(auxdata.time, sum(A1av.^2, 2)))
 
 
 %% Solve platoon
-init = 3;
+init = 2;
 const = "penalty_minmax";
-platoon = [1,zeros(1,19)];
+platoon = [1];
 [auxdata, leader] = problem_auxdata(platoon, const, traj);
 platoon_name = length(auxdata.Ia) + "av_" + length(auxdata.Ih)/length(auxdata.Ia) + "hv";
-results_in = "results/real_traj/greedy/our_implementation/" + platoon_name + "_" + schedule +"/"; 
+results_in = "results/real_traj/greedy/new_greedy/" + platoon_name + "_" + schedule +"/"; 
 save_res = true;
 
 for penalty_iter = 1:1:10
@@ -94,7 +94,8 @@ for penalty_iter = 1:1:10
         elseif init == 2
             load("results/real_traj/init1/4av_4hv_1/U_10.mat")
             load("results/real_traj/init1/U_1av.mat")
-            U0 = [U_star, U_star(:, 4)];
+            % U0 = [U_star, U_star(:, 4)];
+            U0 = U_1av;
         elseif init == 3
             load("results/real_traj/greedy/init1/1av_19hv_1/U_10.mat")
             U0 = U_star;

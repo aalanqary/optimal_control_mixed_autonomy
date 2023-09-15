@@ -70,12 +70,12 @@ display("objective value = " + trapz(auxdata.time, sum(A1av.^2, 2)))
 
 
 %% Solve platoon
-init = 1;
-const = "greedy";
-platoon = [1,zeros(1,3),1,zeros(1,3),1,zeros(1,11)];
+init = 3;
+const = "penalty_minmax";
+platoon = [1];
 [auxdata, leader] = problem_auxdata(platoon, const, traj);
 platoon_name = length(auxdata.Ia) + "av_" + length(auxdata.Ih)/length(auxdata.Ia) + "hv";
-results_in = "results/real_traj/greedy/init" + init + "/" + platoon_name + "_" + schedule +"/"; 
+results_in = "results/real_traj/greedy/our_implementation/" + platoon_name + "_" + schedule +"/"; 
 save_res = true;
 
 for penalty_iter = 1:1:10
@@ -96,7 +96,7 @@ for penalty_iter = 1:1:10
             load("results/real_traj/init1/U_1av.mat")
             U0 = [U_star, U_star(:, 4)];
         elseif init == 3
-            load("results/real_traj/init1/"+platoon_name+"_1/U_9.mat")
+            load("results/real_traj/greedy/init1/1av_19hv_1/U_10.mat")
             U0 = U_star;
         end 
         [X0, V0, A0] = system_solve(U0, auxdata, leader); 
