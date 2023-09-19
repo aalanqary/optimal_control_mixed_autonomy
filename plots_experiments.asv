@@ -34,9 +34,9 @@ clearvars;
 colors = ["#e6194B", "#f58231", "#ffe119", "#bfef45", "#3cb44b"];
 
 % UPDATE PATH
-load("results/real_traj/init3/5av_3hv_1/leader.mat", "leader")
-load("results/real_traj/init3/5av_3hv_1/auxadata_10.mat", "auxdata")
-load("results/real_traj/init3/5av_3hv_1/U_10.mat", "U_star")
+load("results/real_traj/init3/4av_4hv_1/leader.mat", "leader")
+load("results/real_traj/init3/4av_4hv_1/auxadata_10.mat", "auxdata")
+load("results/real_traj/init3/4av_4hv_1/U_10.mat", "U_star")
 
 platoon_name = length(auxdata.Ia) + "av_" + length(auxdata.Ih)/length(auxdata.Ia) + "hv";
 results_in = "results/real_traj/init3" + "/" + platoon_name + "_1/"; 
@@ -141,7 +141,6 @@ plot(auxdata.time, yline(auxdata.d_min), "color", 'black', "linewidth", 5, "Line
 hold on 
 plot(auxdata.time, yline(auxdata.d_max), "color", 'black', "linewidth", 5, "LineStyle", "--")
 hold on
-ylim([-5 125]);
 title("Penetration Experiment - " + length(auxdata.Ia) + "AVs", "fontsize", 12)
 xlabel("Time (s)", "fontsize", 12)
 ylabel("Headway (m)", "fontsize", 12)
@@ -273,7 +272,6 @@ plot(auxdata.time, yline(auxdata.d_min), "color", 'black', "linewidth", 5, "Line
 hold on 
 plot(auxdata.time, yline(auxdata.d_max), "color", 'black', "linewidth", 5, "LineStyle", "--")
 hold on
-ylim([-5 125]);
 title("Greedy Experiment - " + length(auxdata.Ia) + "AVs", "fontsize", 12)
 xlabel("Time (s)", "fontsize", 12)
 ylabel("Headway (m)", "fontsize", 12)
