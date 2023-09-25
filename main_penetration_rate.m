@@ -183,3 +183,120 @@ display("function counter: " + fin_val.func_count)
 save(results_in + 'Total' + '.mat', 'fin_val')
 
 
+%%
+%% get initial guess
+platoon = [zeros(1,20)];
+results_in = "results/real_traj/init" + init + "/";
+save_res = true;
+[auxdata, leader] = problem_auxdata(platoon, const, traj);
+U_initial = diff(smoothdata(leader.v(auxdata.utime), 'movmean', 3)) ./ diff(auxdata.utime);
+U_initial = [U_initial;0] + 0.00001;
+display(U_initial)
+fun = @(U) objective_gradient_accel_penalty(U, auxdata, leader); 
+nonlcon = []; 
+% [A, b] = lc_v(auxdata); 
+A = []; 
+b = []; 
+Aeq = []; beq = []; 
+a_min = [];
+a_max = []; 
+tic
+%[U_1av, ~, ~, ~, ~, ~] = fmincon(fun, U_initial, A, b, Aeq, beq, a_min, a_max, nonlcon, options);
+[X1av, V1av, A1av] = system_solve([], auxdata, leader);
+timee = toc; 
+
+headway = leader.x(auxdata.time) - X1av - auxdata.l;
+if save_res
+    figure()
+    plot(auxdata.time, leader.v(auxdata.time))
+    hold on 
+    plot(auxdata.time, V1av)
+    ylabel("Velocity")
+    savefig(results_in + 'velocity_1av.fig')
+    
+    figure()
+    plot(auxdata.time, leader.x(auxdata.time))
+    hold on 
+    plot(auxdata.time, X1av)
+    ylabel("Position")
+    savefig(results_in + 'position_1av.fig')
+    
+    figure()
+    plot(auxdata.time, headway)
+    ylabel("Headway")
+    savefig(results_in + 'headway_1av.fig')
+
+    save(results_in + 'U_1av.mat', 'U_1av')
+    save(results_in + 'auxdata_1av.mat', 'auxdata')
+end 
+
+data.objective_val = trapz(auxdata.time, sum(A1av.^2, 2));
+data.optim_system_energy = sum(trapz(auxdata.time, simplified_fuel_model(V1av, A1av, 'RAV4'))); % why is this having the sum after an integration
+data.min_headway = min(min(headway - auxdata.d_min, 0), [], "all");
+data.max_headway = max(max(headway - auxdata.d_max, 0), [], "all");
+display("energy consumption = " +  data.optim_system_energy)
+display("optimization time = " + timee)
+display("Minimum headway violation = " + data.min_headway)
+display("Maximum headway violation = " + data.max_headway)
+display("objective value = " + data.objective_val)
+
+save(results_in + 'AV0' + penalty_iter + '.mat', 'data')
+
+%% get initial guess
+platoon = [zeros(1,20)];
+init = 3;
+results_in = "results/real_traj/init" + init + "/";
+save_res = true;
+[auxdata, leader] = problem_auxdata(platoon, const, traj);
+U_initial = diff(smoothdata(leader.v(auxdata.utime), 'movmean', 3)) ./ diff(auxdata.utime);
+U_initial = [U_initial;0] + 0.00001;
+display(U_initial)
+fun = @(U) objective_gradient_accel_penalty(U, auxdata, leader); 
+nonlcon = []; 
+% [A, b] = lc_v(auxdata); 
+A = []; 
+b = []; 
+Aeq = []; beq = []; 
+a_min = [];
+a_max = []; 
+tic
+%[U_1av, ~, ~, ~, ~, ~] = fmincon(fun, U_initial, A, b, Aeq, beq, a_min, a_max, nonlcon, options);
+[X1av, V1av, A1av] = system_solve([], auxdata, leader);
+timee = toc; 
+
+headway = leader.x(auxdata.time) - X1av - auxdata.l;
+if save_res
+    figure()
+    plot(auxdata.time, leader.v(auxdata.time))
+    hold on 
+    plot(auxdata.time, V1av)
+    ylabel("Velocity")
+    savefig(results_in + 'velocity_1av.fig')
+    
+    figure()
+    plot(auxdata.time, leader.x(auxdata.time))
+    hold on 
+    plot(auxdata.time, X1av)
+    ylabel("Position")
+    savefig(results_in + 'position_1av.fig')
+    
+    figure()
+    plot(auxdata.time, headway)
+    ylabel("Headway")
+    savefig(results_in + 'headway_1av.fig')
+
+    save(results_in + 'U_1av.mat', 'U_1av')
+    save(results_in + 'auxdata_1av.mat', 'auxdata')
+end 
+
+data.objective_val = trapz(auxdata.time, sum(A1av.^2, 2));
+data.optim_system_energy = sum(trapz(auxdata.time, simplified_fuel_model(V1av, A1av, 'RAV4'))); % why is this having the sum after an integration
+data.min_headway = min(min(headway - auxdata.d_min, 0), [], "all");
+data.max_headway = max(max(headway - auxdata.d_max, 0), [], "all");
+display("energy consumption = " +  data.optim_system_energy)
+display("optimization time = " + timee)
+display("Minimum headway violation = " + data.min_headway)
+display("Maximum headway violation = " + data.max_headway)
+display("objective value = " + data.objective_val)
+
+save(results_in + 'AV0' + penalty_iter + '.mat', 'data')
