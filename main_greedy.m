@@ -7,16 +7,14 @@ options = optimoptions('fmincon','Display','iter-detailed', ...
                         'algorithm', 'sqp', ...
                         'MaxIterations', 200);
 traj = "real";
-const = "penalty_minmax";
+const = "greedy";
 init = 1; 
 schedule = 1; 
 if schedule == 1
-    mu_min = 1; 
-    mu_max = 1; 
+    mu_min = 0.1; 
+    mu_max = 0.1; 
     factor = 10; 
 end 
-
-
 %% get initial guess
 platoon = [1];
 results_in = "results/real_traj/init" + init + "/";
@@ -44,23 +42,23 @@ if save_res
     hold on 
     plot(auxdata.time, V1av)
     ylabel("Velocity")
-    savefig(results_in + 'velocity_1av.fig')
+    savefig(results_in + 'velocity_5av.fig')
     
     figure()
     plot(auxdata.time, leader.x(auxdata.time))
     hold on 
     plot(auxdata.time, X1av)
     ylabel("Position")
-    savefig(results_in + 'position_1av.fig')
+    savefig(results_in + 'position_5av.fig')
     
     figure()
     plot(auxdata.time, headway)
     ylabel("Headway")
-    savefig(results_in + 'headway_1av.fig')
+    savefig(results_in + 'headway_5av.fig')
 
-    save(results_in + 'U_1av.mat', 'U_1av')
-    save(results_in + 'auxdata_1av.mat', 'auxdata')
-end 
+    save(results_in + 'U_5av.mat', 'U_1av')
+    save(results_in + 'auxdata_5av.mat', 'auxdata')
+end
 
 display("optimization time = " + timee)
 display("Minimum headway violation = " + min(min(headway - auxdata.d_min, 0), [], "all"))
@@ -71,13 +69,16 @@ display("objective value = " + trapz(auxdata.time, sum(A1av.^2, 2)))
 
 %% Solve platoon
 init = 2;
-const = "penalty_minmax";
-platoon = [1];
+const = "greedy";
+platoon = [1, zeros(1, 3), 1, zeros(1,3),1, zeros(1,3), 1, zeros(1,3), 1];
 [auxdata, leader] = problem_auxdata(platoon, const, traj);
 platoon_name = length(auxdata.Ia) + "av_" + length(auxdata.Ih)/length(auxdata.Ia) + "hv";
 results_in = "results/real_traj/greedy/new_greedy/" + platoon_name + "_" + schedule +"/"; 
 save_res = true;
+display(results_in)
 
+func_eval_count = 0;
+tic
 for penalty_iter = 1:1:10
     if const == "penalty_minmax"
         fun = @(U) objective_gradient_accel_penalty(U, auxdata, leader); 
@@ -90,12 +91,13 @@ for penalty_iter = 1:1:10
     if penalty_iter == 1
         if init == 1
             load("results/real_traj/init"+init+"/U_1av.mat")
-            U0 = repmat(U_1av, [1, length(auxdata.Ia)]);
+            U0 = [U_1av];
+%             U0 = repmat(U_1av, [1, length(auxdata.Ia)]);
         elseif init == 2
-            load("results/real_traj/init1/4av_4hv_1/U_10.mat")
-            load("results/real_traj/init1/U_1av.mat")
+            load("results/real_traj/greedy/new_greedy/4av_2.25hv_1/U_10.mat")
+%             load("results/real_traj/init"+init+"/U_5av.mat")
             % U0 = [U_star, U_star(:, 4)];
-            U0 = U_1av;
+            U0 = [U_star, U_star(:,4)];
         elseif init == 3
             load("results/real_traj/greedy/init1/1av_19hv_1/U_10.mat")
             U0 = U_star;
@@ -122,7 +124,6 @@ for penalty_iter = 1:1:10
     tic
     [U_star, f_val, ~, output, ~, grad] = fmincon(fun, U0, A, b, Aeq, beq, a_min, a_max, nonlcon, options);
     [X_star, V_star, A_star] = system_solve(U_star, auxdata, leader);
-    timee = toc; 
     
     Xl = [leader.x(auxdata.time), X_star]; 
     headway = Xl(:,auxdata.Ia) - X_star(:, auxdata.Ia) - auxdata.l;
@@ -135,8 +136,8 @@ for penalty_iter = 1:1:10
         figure()
         plot(auxdata.time, leader.v(auxdata.time), "color", "black")
         hold on 
-        plot(auxdata.time, V_star(:, auxdata.Ih), "color", "blue", "LineWidth", 0.5)
-        hold on 
+%         plot(auxdata.time, V_star(:, auxdata.Ih), "color", "blue", "LineWidth", 0.5)
+%         hold on 
         plot(auxdata.time, V_star(:, auxdata.Ia), "color", "red", "LineWidth", 1.5)
         ylabel("Velocity")
         savefig(results_in + 'velocity_' + penalty_iter + '.fig')
@@ -144,8 +145,8 @@ for penalty_iter = 1:1:10
         figure()
         plot(auxdata.time, leader.x(auxdata.time), "color", "black")
         hold on 
-        plot(auxdata.time, X_star(:, auxdata.Ih), "color", "blue", "LineWidth", 0.5)
-        hold on 
+%         plot(auxdata.time, X_star(:, auxdata.Ih), "color", "blue", "LineWidth", 0.5)
+%         hold on 
         plot(auxdata.time, X_star(:, auxdata.Ia), "color", "red","LineWidth", 1.5)
         ylabel("Position")
         savefig(results_in + 'position_' + penalty_iter + '.fig')
@@ -167,12 +168,12 @@ for penalty_iter = 1:1:10
         save(results_in + 'auxadata_' + penalty_iter + '.mat', 'auxdata')
         save(results_in + 'U_' + penalty_iter + '.mat', 'U_star')
     end 
-
-    data.timee = timee;
     data.min_violation = min(violations);
     data.max_violation = max(violations);
     data.objective_val = trapz(auxdata.time, sum(A_star.^2, 2));
     data.optim_system_energy = sum(trapz(auxdata.time, simplified_fuel_model(V_star, A_star, 'RAV4'))); % why is this having the sum after an integration
+    func_eval_count = func_eval_count + output.funcCount;
+    data.func_count = func_eval_count;
     save(results_in + 'Data_' + penalty_iter + '.mat', 'data')
 
     display("optimization time = " + data.timee)
@@ -183,3 +184,9 @@ for penalty_iter = 1:1:10
     auxdata.mu_min = auxdata.mu_min * factor; 
     auxdata.mu_max = auxdata.mu_max * factor; 
 end 
+timee = toc;
+fin_val.timee = timee;
+fin_val.func_count = func_eval_count;
+display("total optimization time: " + fin_val.timee)
+display("function counter: " + fin_val.func_count)
+save(results_in + 'Total' + '.mat', 'fin_val')

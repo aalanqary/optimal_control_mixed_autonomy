@@ -1,11 +1,8 @@
-function [z, dz] = objective_gradient_accel_penalty(U_vec, auxdata, leader)
+function [z, dz] = objective_gradient_accel_greedy(U_vec, auxdata, leader)
     
     % Objective 
     [X, V, A] = system_solve(U_vec, auxdata, leader);
     z = J(X, A, auxdata, leader, U_vec);
-    X = X(:, auxdata.Ia);
-    V = V(:, auxdata.Ia);
-    A = A(:, auxdata.Ia);
     % Gradient
     if nargout >= 2
         Fx = griddedInterpolant(auxdata.time, X);
@@ -38,8 +35,9 @@ end
 %%%%% Objective Function %%%%%
 function j = J(X, A, auxdata, leader, U_vec)
     [phi_min, phi_max] = penalty_minmax(X, auxdata, leader);
-    running_cost = phi_min + phi_max;
-    terminal_cost = trapz(141, sum(U_vec.^2, 2)); 
+    A_av = A(:,auxdata.Ia);
+    running_cost = sum(A_av.^2, 2) + phi_min + phi_max;
+    terminal_cost = 0; 
     j = trapz(auxdata.time, running_cost) + terminal_cost;
 end 
 
@@ -66,14 +64,14 @@ function PQ_dot = F_adjoint(t, PQ, X, V, U, A, auxdata, leader)
 
     %%%% Human vehicles (HV) %%%%
     %%%% dot(zeta) = -Ly + zeta fy
-%     P_dot(auxdata.Ih) = -L_partial(t, X, V, U, A, "xh", auxdata, leader) ...
-%         - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata) ...
-%         - Q(auxdata.Ih+1) .* ismembc(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
-%     
-%     Q_dot(auxdata.Ih) = - L_partial(t, X, V, U, A, "vh", auxdata, leader) ...
-%         - P(auxdata.Ih) ...
-%         - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata)  ...
-%         - Q(auxdata.Ih+1) .* ismembc(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);
+    P_dot(auxdata.Ih) = -L_partial(t, X, V, U, A, "xh", auxdata, leader) ...
+        - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "x", auxdata) ...
+        - Q(auxdata.Ih+1) .* ismembc(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "xl", auxdata);
+    
+    Q_dot(auxdata.Ih) = - L_partial(t, X, V, U, A, "vh", auxdata, leader) ...
+        - P(auxdata.Ih) ...
+        - Q(auxdata.Ih) .* ACC_partial(Xl(auxdata.Ih), X(auxdata.Ih), Vl(auxdata.Ih), V(auxdata.Ih), "v", auxdata)  ...
+        - Q(auxdata.Ih+1) .* ismembc(auxdata.Ih+1, auxdata.Ih)' .* ACC_partial(X(auxdata.Ih), Xf(auxdata.Ih), V(auxdata.Ih), Vf(auxdata.Ih), "vl", auxdata);
     
     %%%% Automated vehicles (AV) %%%%
     P_dot(auxdata.Ia) = -L_partial(t, X, V, U, A, "xa", auxdata, leader) ...
@@ -101,20 +99,18 @@ function dl = L_partial(t, X, V, U, A, var, auxdata, leader)
         headway_max = [headway_max; 0];
     end
     if var == "xh" 
-        dl_acc = 2 * A(Ih) .* ACC_partial(Xl(Ih), X(Ih), Vl(Ih), V(Ih), "x", auxdata) ...
-            + ismembc(Ih+1, Ih)' * 2 .* Af(Ih) .* ACC_partial(X(Ih), Xf(Ih), V(Ih), Vf(Ih), "xl", auxdata);
+        dl_acc = 0;
         dl_penalty = 2 * ismembc(Ih+1, Ia)' .* (auxdata.mu_min * headway_min(Ih+1) + auxdata.mu_max * headway_max(Ih+1)); 
         dl = dl_acc + dl_penalty;
     elseif var == "xa"
-        dl_acc = 2 * ismembc(Ia+1, Ih)' .* Af(Ia) .* ACC_partial(X(Ia), Xf(Ia), V(Ia), Vf(Ia), "xl", auxdata); 
+        dl_acc = 0;
         dl_penalty = - 2 * (auxdata.mu_min * headway_min(Ia) + auxdata.mu_max * headway_max(Ia)) ...
                      + 2 * ismembc(Ia+1, Ia)' .* (auxdata.mu_min * headway_min(Ia+1) + auxdata.mu_max * headway_max(Ia+1));
         dl = dl_acc + dl_penalty;
     elseif var == "vh"
-        dl = 2 * A(Ih) .* ACC_partial(Xl(Ih), X(Ih), Vl(Ih), V(Ih), "v", auxdata) ...
-            + 2 * ismembc(Ih+1, Ih)' .* Af(Ih) .* ACC_partial(X(Ih), Xf(Ih), V(Ih), Vf(Ih), "vl", auxdata);
+        dl = 0;
     elseif var == "va"
-        dl = 2 * ismembc(Ia+1, Ih)' .* Af(Ia) .* ACC_partial(X(Ia), Xf(Ia), V(Ia), Vf(Ia), "vl", auxdata);
+        dl = 0;
     else 
        dl = 2*U(auxdata.time);    
     end 

@@ -68,11 +68,12 @@ display("Maximum headway violation = " + max(max(headway - auxdata.d_max, 0), []
 display("objective value = " + trapz(auxdata.time, sum(A1av.^2, 2)))
 
 %% Solve platoon
-platoon = [1,zeros(1, 3),1,zeros(1, 3),1,zeros(1, 3),1,zeros(1, 3)];
+platoon = [1,zeros(1, 3),1, zeros(1,15)];
 [auxdata, leader] = problem_auxdata(platoon, const, traj);
 platoon_name = length(auxdata.Ia) + "av_" + length(auxdata.Ih)/length(auxdata.Ia) + "hv";
 results_in = "results/real_traj/init" + init + "/" + platoon_name + "_" + schedule +"/"; 
 save_res = true;
+init = 2;
 
 for penalty_iter = 1:1:10
     if const == "penalty_minmax"
@@ -86,9 +87,9 @@ for penalty_iter = 1:1:10
             load("results/real_traj/init"+init+"/U_1av.mat")
             U0 = repmat(U_1av, [1, length(auxdata.Ia)]);
         elseif init == 2
-            load("results/real_traj/init1/3av_3hv_1/U_10.mat")
+            load("results/real_traj/init3/1av_19hv_1/U_10.mat")
             load("results/real_traj/init1/U_1av.mat")
-            U0 = [U_star, U_1av];
+            U0 = [U_star, U_star];
         elseif init == 3
             load("results/real_traj/init1/"+platoon_name+"_1/U_9.mat")
             U0 = U_star;
