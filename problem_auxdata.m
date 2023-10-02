@@ -1,4 +1,4 @@
-function [auxdata, leader] = problem_auxdata(platoon, constraints, leader_type, leader_trajectory)
+function [auxdata, leader] = problem_auxdata(platoon, constraints, leader_type, leader_trajectory, use_original_positions, av_num, sequential)
 %     platoon: list of 1 and 0 representing locations of the AV and HV
 %     constraints: type of problem in terms of dealing with constraints
 %     leader_type: the name of the leader trajectory ["simple", "sin", "real"]
@@ -88,8 +88,21 @@ function [auxdata, leader] = problem_auxdata(platoon, constraints, leader_type, 
         auxdata.v0 = ones(auxdata.len_platoon, 1) * leader.v(0); 
         opts = odeset('RelTol',1e-10,'AbsTol',1e-12);
         [~, xl] = ode45(@(t,x) leader.v(t), auxdata.time, 0, opts);
-        xl = xl + x0(1);
-        auxdata.x0 = x0(2:end);
+        if sequential == true
+            auxdata_old = load("results/real_traj/positioning/AV5/auxdata.mat");
+            x0 = auxdata_old.auxdata.x0(1:auxdata.len_platoon);
+            xl = xl + x0(1) + eq+auxdata.l;
+            auxdata.x0 = x0(1:end);
+        elseif use_original_positions == true
+            auxdata_old = load("results/real_traj/positioning/AV5/auxdata.mat");
+            x_1st_av_index = 4*av_num - 3;
+            x0 = auxdata_old.auxdata.x0(x_1st_av_index:x_1st_av_index+3);
+            xl = xl + x0(1) + eq+auxdata.l;
+            auxdata.x0 = x0(1:end);
+        else
+            xl = xl + x0(1);
+            auxdata.x0 = x0(2:end);
+        end
         leader.x = griddedInterpolant(auxdata.time, xl);
     else
         load(leader_trajectory, "X_star")
@@ -97,10 +110,16 @@ function [auxdata, leader] = problem_auxdata(platoon, constraints, leader_type, 
         load(leader_trajectory, "A_star")
         leader.v = griddedInterpolant(auxdata.time, V_star(:, end));
         xl = X_star(:, end);
-        eq = round(eq_headway(leader.v(0), auxdata), 5);
-        x0 = (eq+auxdata.l) * flip(0:1:auxdata.len_platoon)';
         auxdata.v0 = ones(auxdata.len_platoon, 1) * leader.v(0);
-        xl = xl + x0(1);
+        if use_original_positions == true
+            auxdata_old = load("results/real_traj/positioning/AV5/auxdata.mat");
+            xl_index = 4*av_num - 4;
+            x0 = auxdata_old.auxdata.x0(xl_index:xl_index+4);
+        else
+            eq = round(eq_headway(leader.v(0), auxdata), 5);
+            x0 = (eq+auxdata.l) * flip(0:1:auxdata.len_platoon)';
+            xl = xl + x0(1);
+        end
         auxdata.x0 = x0(2:end);
         leader.x = griddedInterpolant(auxdata.time, xl);
     end

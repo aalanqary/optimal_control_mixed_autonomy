@@ -208,7 +208,7 @@ options = optimoptions('fmincon','Display','iter-detailed', ...
                         'MaxIterations', 200);
 traj = "real";
 const = "penalty_minmax";
-experiment = "sequential";
+experiment = "sequential_new";
 init = 1; 
 schedule = 1; 
 if schedule == 1
@@ -219,9 +219,13 @@ end
 
 platoon = [1,zeros(1, 3)];
 
-av_num = 5;
+av_num = 2;
 
-[auxdata, leader] = problem_auxdata(platoon, const, traj, "results/real_traj/" + experiment + "/" + "AV" + (av_num-1) + "/" + "all_results.mat");
+if av_num == 1
+    [auxdata, leader] = problem_auxdata(platoon, const, traj, "", true, av_num);
+else
+    [auxdata, leader] = problem_auxdata(platoon, const, traj, "results/real_traj/" + experiment + "/" + "AV" + (av_num-1) + "/" + "all_results.mat", true, av_num);
+end
 
 results_in = "results/real_traj/" + experiment + "/" + "AV" + av_num + "/";
 if not(isfolder(results_in))
@@ -343,6 +347,7 @@ for penalty_iter = 1:1:10
     auxdata.mu_max = auxdata.mu_max * factor; 
 end 
 
+
 %% Sequential platoons
 
 clearvars;
@@ -355,7 +360,7 @@ options = optimoptions('fmincon','Display','iter-detailed', ...
                         'MaxIterations', 200);
 traj = "real";
 const = "penalty_minmax";
-experiment = "sequential_platoons";
+experiment = "sequential_platoons_new";
 init = 1; 
 schedule = 1; 
 if schedule == 1
@@ -370,7 +375,7 @@ platoon = [1,zeros(1, 3), 1,zeros(1, 3), 1,zeros(1, 3), 1,zeros(1, 3), 1,zeros(1
 % CHANGE
 av_num = 5;
 
-[auxdata, leader] = problem_auxdata(platoon, const, traj, "");
+[auxdata, leader] = problem_auxdata(platoon, const, traj, "", true, av_num, true);
 
 results_in = "results/real_traj/" + experiment + "/" + "AV" + av_num + "/";
 if not(isfolder(results_in))
@@ -382,7 +387,7 @@ save_res = true;
 %NEED TO UPDATE ON EVERY RUN
 U0 = [];
 for c = 1:av_num
-    load("results/real_traj/sequential/" + "AV" + c + "/U_10.mat");
+    load("results/real_traj/sequential_new/" + "AV" + c + "/U_10.mat");
     U0 = [U0, U_star];
 end
 
