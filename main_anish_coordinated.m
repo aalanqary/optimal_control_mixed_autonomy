@@ -219,7 +219,7 @@ end
 
 platoon = [1,zeros(1, 3)];
 
-av_num = 2;
+av_num = 3;
 
 if av_num == 1
     [auxdata, leader] = problem_auxdata(platoon, const, traj, "", true, av_num);
