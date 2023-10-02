@@ -160,10 +160,10 @@ clearvars;
 colors = ["#e6194B", "#f58231", "#ffe119", "#bfef45", "#3cb44b"];
 
 % UPDATE PATH
-path = "results/real_traj/greedy/new_greedy/5av_2.4hv_1/";
+platoon_name = "5av_2.4hv_1"
+path = "results/real_traj/greedy/new_greedy/" + platoon_name + "/";
 load(path+"leader.mat", "leader")
 load(path+"auxadata_10", "auxdata")
-platoon_name = length(auxdata.Ia) + "av_" + length(auxdata.Ih)/length(auxdata.Ia) + "hv";
 if platoon_name == "1av_19hv"
     load(path+"U_10.mat", "U_1av")
     U_star = U_1av;
@@ -172,7 +172,7 @@ else
 end
 
 %Path to store results
-results_folder = "final_plots/greedy_experiments/" + platoon_name;
+results_folder = "final_plots/new_greedy_experiments/" + platoon_name;
 if not(isfolder(results_folder))
     mkdir(results_folder)
 end
