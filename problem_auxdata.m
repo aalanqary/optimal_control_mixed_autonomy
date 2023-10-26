@@ -114,7 +114,7 @@ function [auxdata, leader] = problem_auxdata(platoon, constraints, leader_type, 
         if use_original_positions == true
             auxdata_old = load("results/real_traj/positioning/AV5/auxdata.mat");
             xl_index = 4*av_num - 4;
-            x0 = auxdata_old.auxdata.x0(xl_index:xl_index+4);
+            x0 = auxdata_old.auxdata.x0(xl_index:xl_index+auxdata.len_platoon);
         else
             eq = round(eq_headway(leader.v(0), auxdata), 5);
             x0 = (eq+auxdata.l) * flip(0:1:auxdata.len_platoon)';

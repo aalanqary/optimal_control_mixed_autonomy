@@ -68,13 +68,6 @@ if save_res
     save(results_in + "all_results.mat")
 end 
 
-% data.timee = timee;
-% data.min_violation = min(violations);
-% data.max_violation = max(violations);
-% data.objective_val = trapz(auxdata.time, sum(A_star.^2, 2));
-% data.optim_system_energy = sum(trapz(auxdata.time, simplified_fuel_model(V_star, A_star, 'RAV4'))); % why is this having the sum after an integration
-% save(results_in + 'Data_' + penalty_iter + '.mat', 'data')
-
 display("optimization time = " + timee)
 display("Minimum headway violation = " + min(min(headway - auxdata.d_min, 0), [], "all"))
 display("Maximum headway violation = " + max(max(headway - auxdata.d_max, 0), [], "all"))
@@ -196,6 +189,83 @@ for penalty_iter = 1:1:10
     auxdata.mu_max = auxdata.mu_max * factor; 
 end 
 
+%% Find initial solution for 2 AV
+clearvars;
+options = optimoptions('fmincon','Display','iter-detailed', ...
+                        'SpecifyObjectiveGradient', true ,...
+                        'SpecifyConstraintGradient', false ,...
+                        'FunValCheck','on', 'DerivativeCheck', 'off',...
+                        'maxfunevals',1e6, 'StepTolerance',1e-12, ...
+                        'algorithm', 'sqp', ...
+                        'MaxIterations', 200);
+traj = "real";
+const = "penalty_minmax";
+experiment = "sequential_new_init";
+init = 1; 
+
+av_num = 2;
+
+platoon = [1];
+
+if av_num == 1
+    [auxdata, leader] = problem_auxdata(platoon, const, traj, "", true, av_num);
+else
+    [auxdata, leader] = problem_auxdata(platoon, const, traj, "results/real_traj/sequential_new/AV1/all_results.mat", true, av_num);
+end
+
+results_in = "results/real_traj/" + experiment + "_2/" + "AV" + av_num + "/";
+if not(isfolder(results_in))
+        mkdir(results_in)
+end 
+
+save_res = true;
+U_initial = diff(smoothdata(leader.v(auxdata.utime), 'movmean', 3)) ./ diff(auxdata.utime);
+U_initial = [U_initial;0] + 0.00001;
+fun = @(U) objective_gradient_accel_penalty(U, auxdata, leader); 
+nonlcon = []; 
+% [A, b] = lc_v(auxdata); 
+A = []; 
+b = []; 
+Aeq = []; beq = []; 
+a_min = [];
+a_max = []; 
+tic
+[U_1av, ~, ~, ~, ~, ~] = fmincon(fun, U_initial, A, b, Aeq, beq, a_min, a_max, nonlcon, options);
+[X1av, V1av, A1av] = system_solve(U_1av, auxdata, leader);
+timee = toc; 
+
+headway = leader.x(auxdata.time) - X1av - auxdata.l;
+if save_res
+    figure()
+    plot(auxdata.time, leader.v(auxdata.time))
+    hold on 
+    plot(auxdata.time, V1av)
+    ylabel("Velocity")
+    savefig(results_in + 'velocity_1av.fig')
+    
+    figure()
+    plot(auxdata.time, leader.x(auxdata.time))
+    hold on 
+    plot(auxdata.time, X1av)
+    ylabel("Position")
+    savefig(results_in + 'position_1av.fig')
+    
+    figure()
+    plot(auxdata.time, headway)
+    ylabel("Headway")
+    savefig(results_in + 'headway_1av.fig')
+
+    save(results_in + 'U_1av.mat', 'U_1av')
+    save(results_in + 'auxdata_1av.mat', 'auxdata')
+    % Save all results
+    save(results_in + "all_results.mat")
+end 
+
+display("optimization time = " + timee)
+display("Minimum headway violation = " + min(min(headway - auxdata.d_min, 0), [], "all"))
+display("Maximum headway violation = " + max(max(headway - auxdata.d_max, 0), [], "all"))
+display("objective value = " + trapz(auxdata.time, sum(A1av.^2, 2)))
+
 %% Sequential
 % penalty_iter = 1;
 clearvars;
@@ -212,14 +282,14 @@ experiment = "sequential_new";
 init = 1; 
 schedule = 1; 
 if schedule == 1
-    mu_min = 1; 
-    mu_max = 1; 
+    mu_min = 0.01; 
+    mu_max = 0.01; 
     factor = 10; 
 end 
 
 platoon = [1,zeros(1, 3)];
 
-av_num = 2;
+av_num = 5;
 
 if av_num == 1
     [auxdata, leader] = problem_auxdata(platoon, const, traj, "", true, av_num);
@@ -227,7 +297,7 @@ else
     [auxdata, leader] = problem_auxdata(platoon, const, traj, "results/real_traj/" + experiment + "/" + "AV" + (av_num-1) + "/" + "all_results.mat", true, av_num);
 end
 
-results_in = "results/real_traj/" + experiment + "/" + "AV" + av_num + "/";
+results_in = "results/real_traj/" + experiment + "_2/" + "AV" + av_num + "/";
 if not(isfolder(results_in))
         mkdir(results_in)
 end 
@@ -245,9 +315,14 @@ for penalty_iter = 1:1:10
         if init == 1
             %load("results/real_traj/init"+init+"/U_1av.mat")
             %U0 = repmat(U_1av, [1, length(auxdata.Ia)]);
+
             U_initial = diff(smoothdata(leader.v(auxdata.utime), 'movmean', 3)) ./ diff(auxdata.utime);
             U_initial = [U_initial;0] + 0.00001;
             U0 = U_initial;
+
+%             init_AV2 = "results/real_traj/sequential_new_init_2/AV2/U_1av.mat";
+%             load(init_AV2);
+%             U0 = U_1av;
         end 
         [X0, V0, A0] = system_solve(U0, auxdata, leader); 
         Xl = [leader.x(auxdata.time), X0]; 
@@ -370,7 +445,7 @@ if schedule == 1
 end 
 
 % CHANGE
-platoon = [1,zeros(1, 3), 1,zeros(1, 3), 1,zeros(1, 3), 1,zeros(1, 3), 1,zeros(1, 3)];
+platoon = [1,zeros(1, 3), 1, zeros(1,3), 1, zeros(1,3), 1, zeros(1,3), 1, zeros(1,3)];
 
 % CHANGE
 av_num = 5;
@@ -430,7 +505,7 @@ if save_res
     close()
 
     save(results_in + 'auxdata.mat', 'auxdata')
-    save(results_in + 'U.mat', 'U_star')
+    save(results_in + 'U.mat', 'U0')
     % Save all results
     save(results_in + "all_results.mat")
 end
@@ -440,6 +515,7 @@ data.max_violation = max(violations);
 data.objective_val = trapz(auxdata.time, sum(A_star.^2, 2));
 data.optim_system_energy = sum(trapz(auxdata.time, simplified_fuel_model(V_star, A_star, 'RAV4'))); % why is this having the sum after an integration
 save(results_in + 'Data.mat', 'data')
+save(results_in + "leader.mat", 'leader');
 
 %display("optimization time = " + timee)
 display("Minimum violation = " + min(violations))
