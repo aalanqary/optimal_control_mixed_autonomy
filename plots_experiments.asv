@@ -34,12 +34,12 @@ clearvars;
 colors = ["#e6194B", "#f58231", "#ffe119", "#bfef45", "#3cb44b"];
 
 % UPDATE PATH
-load("results/real_traj/penetration/1av_19hv_1/leader.mat", "leader")
-load("results/real_traj/penetration/1av_19hv_1/auxadata_10.mat", "auxdata")
-load("results/real_traj/penetration/1av_19hv_1/U_10.mat", "U_star")
+load("results/real_traj/init3/0av/leader.mat", "leader")
+load("results/real_traj/init3/0av/auxadata_10.mat", "auxdata")
+load("results/real_traj/init3/0av/U_10.mat", "U_star")
 
 platoon_name = length(auxdata.Ia) + "av_" + length(auxdata.Ih)/length(auxdata.Ia) + "hv";
-results_in = "results/real_traj/penetration" + "/" + platoon_name + "_1/"; 
+results_in = "results/real_traj/platoon_" + "/" + platoon_name + "_1/"; 
 
 %Path to store results
 results_folder = "final_plots/penetration_experiments/" + platoon_name;
