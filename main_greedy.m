@@ -11,9 +11,9 @@ const = "greedy";
 init = 1; 
 schedule = 1; 
 if schedule == 1
-    mu_min = 0.1; 
-    mu_max = 0.1; 
-    factor = 10; 
+    mu_min = 100; 
+    mu_max = 100; 
+    factor = 8; 
 end 
 %% get initial guess
 platoon = [1];
@@ -68,18 +68,18 @@ display("objective value = " + trapz(auxdata.time, sum(A1av.^2, 2)))
 
 
 %% Solve platoon
-init = 2;
+init = 1;
 const = "greedy";
-platoon = [1, zeros(1, 3), 1, zeros(1,3),1, zeros(1,3), 1, zeros(1,3), 1];
+platoon = [1];
 [auxdata, leader] = problem_auxdata(platoon, const, traj);
 platoon_name = length(auxdata.Ia) + "av_" + length(auxdata.Ih)/length(auxdata.Ia) + "hv";
-results_in = "results/real_traj/greedy/new_greedy/" + platoon_name + "_" + schedule +"/"; 
+results_in = "results/real_traj/greedy/" + platoon_name + "_" + schedule +"/"; 
 save_res = true;
 display(results_in)
 
 func_eval_count = 0;
 tic
-for penalty_iter = 1:1:10
+for penalty_iter = 1:1:14
     if const == "penalty_minmax"
         fun = @(U) objective_gradient_accel_penalty(U, auxdata, leader); 
     elseif const == "smooth_penalty"
@@ -90,7 +90,7 @@ for penalty_iter = 1:1:10
 %     options = optimoptions(options, 'MaxIterations', 10 + 5*penalty_iter);
     if penalty_iter == 1
         if init == 1
-            load("results/real_traj/init"+init+"/U_1av.mat")
+            load("results/real_traj/init"+init+"/U_5av.mat")
             U0 = [U_1av];
 %             U0 = repmat(U_1av, [1, length(auxdata.Ia)]);
         elseif init == 2
